@@ -1,216 +1,119 @@
-<!DOCTYPE HTML>
-<!--
-	Story by HTML5 UP
-	html5up.net | @ajlkn
-	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
--->
-<html>
-	<head>
-		<title>Luke's Portfolio 🌵</title>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="assets/css/main.css" />
-		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
-	</head>
-	<body class="is-preload">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1d3a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="House of Pizza" />
+  <meta name="description" content="Walk into the House of Pizza, build your order, and dodge flying pizzas while it bakes!" />
+  <title>House of Pizza</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍕</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
 
-		<!-- Wrapper -->
-			<div id="wrapper" class="divided">
+    <!-- ============ 1. OUTSIDE ============ -->
+    <section id="screen-outside" class="screen active" aria-label="Outside the restaurant">
+      <div class="moon"></div>
+      <div class="stars"></div>
 
-				<!-- One -->
-					<section class="banner style1 orient-left content-align-left image-position-right fullscreen onload-image-fade-in onload-content-fade-right">
-						<div class="content">
-							<h1>Hello!</h1>
-							<p class="major">I'm Luke. A programmer and GIS analyst.</p>
-							<ul class="actions stacked">
-								<li><a href="#first" class="button big wide smooth-scroll-middle">Jump to the Portfolio</a></li>
-							</ul>
-						</div>
-						<div class="image">
-							<img src="images/banner.svg" alt="" />
-						</div>
-					</section>
+      <div class="building" id="building">
+        <div class="sign">House of Pizza</div>
+        <div class="awning"></div>
+        <div class="facade">
+          <div class="window"><span>🍕</span></div>
+          <div class="doorway">
+            <div class="door-light"></div>
+            <button id="door" class="door" aria-label="Enter House of Pizza">
+              <span class="door-glass"></span>
+              <span class="open-sign">OPEN</span>
+              <span class="knob"></span>
+            </button>
+          </div>
+          <div class="window"><span>🥤</span></div>
+        </div>
+      </div>
+      <div class="street"></div>
+      <p class="hint">👆 Tap the door to enter</p>
+      <div class="flash"></div>
+    </section>
 
-				<!-- Two -->
-					<section class="spotlight style1 orient-right content-align-left image-position-center onscroll-image-fade-in" id="first">
-						<div class="content">
-							<h2>A Python toolbox to export images</h2>
-							<p>This project uses an object oriented approach with a Python toolbox. By having classes it simplifies troubleshooting and allows for a simpler design. This method works well for toolboxes with lots of options</p>
-							<ul class="actions stacked">
-								<li><a href="https://gist.github.com/lukedshenderson/d68a5ea31835522d039c20d6ad1ef6ab" class="button">Open in GitHub</a></li>
-							</ul>
-						</div>
-						<div class="image">
-							<img src="images/pyt.svg" alt="" />
-						</div>
-					</section>
+    <!-- ============ 2. ORDER ============ -->
+    <section id="screen-order" class="screen" aria-label="Build your order">
+      <header class="order-header">
+        <button id="leave" class="back-btn" type="button">← Leave</button>
+        <h2>What'll it be?</h2>
+        <p>👨‍🍳 Chef Tony is warming up his throwing arm…</p>
+      </header>
 
-				<!-- Three -->
-					<section class="spotlight style1 orient-left content-align-left image-position-center onscroll-image-fade-in">
-						<div class="content">
-							<h2>Log ArcGIS Online data into a CSV</h2>
-							<p>This Jupyter Notebook connects to ArcGIS.com via the Python API. Then it logs data into a CSV table. This data can then be used to help manage content.</p>
-							<ul class="actions stacked">
-								<li><a href="https://gist.github.com/lukedshenderson/21967371fbb33496a50d1079bbba0be5" class="button">Open in GitHub</a></li>
-							</ul>
-						</div>
-						<div class="image">
-							<img src="images/data-to-table.svg" alt="" />
-						</div>
-					</section>
+      <div class="order-body">
+        <div class="preview-wrap">
+          <div id="pizza" class="pizza"></div>
+        </div>
 
-				<!-- Four -->
-					<section class="spotlight style1 orient-right content-align-left image-position-center onscroll-image-fade-in">
-						<div class="content">
-							<h2>Check for old SDE versions</h2>
-							<p>This Python script will check an enterprise geodatabase for old and forgotten versions. It then sends an email to the version owner to remind them to close out of their work.</p>
-							<ul class="actions stacked">
-								<li><a href="https://gist.github.com/lukedshenderson/a7e7d26a5a6cf0b6dc0a74b45b2e113b" class="button">Open in GitHub</a></li>
-							</ul>
-						</div>
-						<div class="image">
-							<img src="images/versions.svg" alt="" />
-						</div>
-					</section>
+        <h3>Size</h3>
+        <div class="chips chips-grid" data-group="size"></div>
 
-				<!-- Five -->
-					<section class="wrapper style1 align-center">
-						<div class="inner">
-							<h2>Here are some cool drone photos</h2>
-						</div>
+        <h3>Crust</h3>
+        <div class="chips chips-grid" data-group="crust"></div>
 
-						<!-- Gallery -->
-							<div class="gallery style2 medium lightbox onscroll-fade-in">
-								<article>
-									<a href="images/gallery/fulls/DJI_0004.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_0004.JPG" alt="" />
-									</a>
-									<!-- <div class="caption">
-										<h3>Ipsum Dolor</h3>
-										<p>Lorem ipsum dolor amet, consectetur magna etiam elit. Etiam sed ultrices.</p>
-										<ul class="actions fixed">
-											<li><span class="button small">Details</span></li>
-										</ul>
-									</div> -->
-								</article>
-								<article>
-									<a href="images/gallery/fulls/DJI_0114.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_0114.JPG" alt="" />
-									</a>
-								
-								</article>
-								<article>
-									<a href="images/gallery/fulls/DJI_0194.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_0194.JPG" alt="" />
-									</a>
-							
-								</article>
-								<article>
-									<a href="images/gallery/fulls/DJI_0255.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_0255.JPG" alt="" />
-									</a>
-						
-								</article>
-								<article>
-									<a href="images/gallery/fulls/DJI_0267.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_0267.JPG" alt="" />
-									</a>
-							
-								</article>
-								<article>
-									<a href="images/gallery/fulls/DJI_0276.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_0276.JPG" alt="" />
-									</a>
-							
-								</article>
-								<article>
-									<a href="images/gallery/fulls/DJI_0277.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_0277.JPG" alt="" />
-									</a>
-							
-								</article>
-								<article>
-									<a href="images/gallery/fulls/DJI_0328.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_0328.JPG" alt="" />
-									</a>
-							
-								</article>
-								<article>
-									<a href="images/gallery/fulls/DJI_0329.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_0329.JPG" alt="" />
-									</a>
-							
-								</article>
-								<article>
-									<a href="images/gallery/fulls/DJI_0331.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_0331.JPG" alt="" />
-									</a>
-							
-								</article>
-								<article>
-									<a href="images/gallery/fulls/DJI_0401.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_0401.JPG" alt="" />
-									</a>
-								
-								</article>
-								<article>
-									<a href="images/gallery/fulls/DJI_0422.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_0422.JPG" alt="" />
-									</a>
-					
-								</article>
-								<article>
-									<a href="images/gallery/fulls/DJI_0535.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_0535.JPG" alt="" />
-									</a>
-					
-								</article>
-								<article>
-									<a href="images/gallery/fulls/DJI_0759.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_0759.JPG" alt="" />
-									</a>
-					
-								</article>
-								<article>
-									<a href="images/gallery/fulls/DJI_0813.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_0813.JPG" alt="" />
-									</a>
-					
-								</article>
-								<article>
-									<a href="images/gallery/fulls/DJI_mini_0247.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_mini_0247.JPG" alt="" />
-									</a>
-					
-								</article>
-								<article>
-									<a href="images/gallery/fulls/DJI_phantom_0253.JPG" class="image">
-										<img src="images/gallery/thumbs/DJI_phantom_0253.JPG" alt="" />
-									</a>
-					
-								</article>
-							</div>
+        <h3>Toppings <small>$1.50 each</small></h3>
+        <div class="chips" data-group="toppings"></div>
 
-					</section>
+        <p class="bake-note">⏱️ Bake time: <b id="bake-time">0</b>s — survive the kitchen until it's ready!</p>
+      </div>
 
-				<!-- Footer -->
-					<footer class="wrapper style1 align-center">
-						<div class="inner">
-							
-							<p>The end.</p>
-						</div>
-					</footer>
+      <footer class="order-footer">
+        <div class="total"><small>Total</small>$<span id="total">0.00</span></div>
+        <button id="place-order" class="btn-primary" type="button">Place Order 🍕</button>
+      </footer>
+    </section>
 
-			</div>
+    <!-- ============ 3. GAME ============ -->
+    <section id="screen-game" class="screen" aria-label="Dodge the pizzas">
+      <canvas id="game"></canvas>
+      <div class="hud">
+        <div id="lives" class="lives">❤️❤️❤️</div>
+        <div class="bake">
+          <span id="bake-label">Baking your order…</span>
+          <div class="bar"><div id="bake-fill"></div></div>
+        </div>
+        <div id="score" class="score">0</div>
+      </div>
+      <div id="tutorial" class="tutorial">
+        <div class="tut-side">👈<span>Tap left</span></div>
+        <div class="tut-side">👉<span>Tap right</span></div>
+      </div>
+      <div id="countdown" class="countdown"></div>
+    </section>
 
-		<!-- Scripts -->
-			<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/jquery.scrollex.min.js"></script>
-			<script src="assets/js/jquery.scrolly.min.js"></script>
-			<script src="assets/js/browser.min.js"></script>
-			<script src="assets/js/breakpoints.min.js"></script>
-			<script src="assets/js/util.js"></script>
-			<script src="assets/js/main.js"></script>
+    <!-- ============ 4. RESULT ============ -->
+    <section id="screen-result" class="screen" aria-label="Results">
+      <div class="card">
+        <div id="result-emoji" class="big-emoji">🍕</div>
+        <h2 id="result-title">Order Up!</h2>
+        <p id="result-text"></p>
+        <div id="receipt" class="receipt"></div>
+        <div class="stats">
+          <div><small>Score</small><b id="final-score">0</b></div>
+          <div><small>Best</small><b id="best-score">0</b></div>
+        </div>
+        <div id="new-best" class="new-best">🏆 New High Score!</div>
+        <button id="retry" class="btn-primary" type="button">Dodge Again</button>
+        <button id="play-again" class="btn-secondary" type="button">New Order</button>
+      </div>
+    </section>
 
-	</body>
+  </div>
+
+  <button id="mute" class="mute" type="button" aria-label="Toggle sound">🔊</button>
+  <script src="game.js"></script>
+</body>
 </html>
