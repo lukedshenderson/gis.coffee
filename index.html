@@ -3,577 +3,486 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>GIS.Coffee — Freshly Brewed Web GIS</title>
-<meta name="description" content="GIS.Coffee — a 100% client-side Web GIS. Grind shapefiles, KML, GeoJSON, CSV and GeoPackages into fresh maps, tables and charts. No server, no cream, no sugar." />
-<meta property="og:title" content="GIS.Coffee — Freshly Brewed Web GIS" />
-<meta property="og:description" content="Drop your beans (spatial data), brew a map, and taste the attributes — all in your browser." />
-<meta name="theme-color" content="#120c09" />
+<title>GIS.Coffee · Make a map from any spatial file</title>
+<meta name="description" content="Drop a Shapefile, KML, GeoJSON, CSV or GeoPackage and instantly map it, explore its table, and export. Free, and your files never leave your browser." />
+<meta property="og:title" content="GIS.Coffee · Freshly brewed maps" />
+<meta property="og:description" content="Map any spatial file in seconds, right in your browser." />
+<meta name="theme-color" content="#fbf7f2" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>" />
 
-<!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-<!-- Tailwind (Play CDN) -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          bean: '#120c09', roast: '#1b1310', mocha: '#261b16', cocoa: '#3a2a22',
-          crema: '#d6a86c', caramel: '#c07f3e', foam: '#f4ebe0', latte: '#cdb8a3',
-          steam: '#8f7a69', matcha: '#8fb573', berry: '#d9665b'
-        },
-        fontFamily: {
-          display: ['Fraunces', 'Georgia', 'serif'],
-          sans: ['Inter', 'system-ui', 'sans-serif'],
-          mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace']
-        }
+    theme: { extend: {
+      colors: {
+        espresso: '#2a1b14',   // primary text
+        roast:    '#5c4033',   // secondary text
+        mocha:    '#6e5b4e',   // muted text
+        caramel:  '#8a4f24',   // primary action
+        crema:    '#c98a4b',   // accent
+        foam:     '#fbf7f2',   // app background
+        milk:     '#f5ede4',   // soft surface
+        line:     '#ebe1d6',   // hairlines
+        berry:    '#b3261e',
+        matcha:   '#3f7d3a'
+      },
+      fontFamily: {
+        display: ['Fraunces', 'Georgia', 'serif'],
+        sans: ['Inter', 'system-ui', 'Segoe UI', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace']
       }
-    }
+    } }
   };
 </script>
 
-<!-- Library CSS -->
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@6/dist/css/tabulator_midnight.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@6/dist/css/tabulator.min.css" />
 
 <style>
-  :root { --bean:#120c09; --roast:#1b1310; --mocha:#261b16; --cocoa:#3a2a22; --crema:#d6a86c; --caramel:#c07f3e; --foam:#f4ebe0; --latte:#cdb8a3; --steam:#8f7a69; }
-  html, body { background: var(--bean); }
-  ::selection { background: rgba(214,168,108,.35); }
+  :root { --espresso:#2a1b14; --roast:#5c4033; --mocha:#6e5b4e; --caramel:#8a4f24; --crema:#c98a4b; --foam:#fbf7f2; --milk:#f5ede4; --line:#ebe1d6; }
+  html, body { background: var(--foam); color: var(--espresso); }
+  ::selection { background: rgba(201,138,75,.28); }
+  :focus-visible { outline: 2px solid var(--caramel); outline-offset: 2px; }
 
-  /* Scrollbars */
-  .scroll-brew::-webkit-scrollbar, .tabulator-tableholder::-webkit-scrollbar { width: 10px; height: 10px; }
-  .scroll-brew::-webkit-scrollbar-thumb, .tabulator-tableholder::-webkit-scrollbar-thumb { background: #3a2a22; border-radius: 99px; border: 2px solid var(--roast); }
-  .scroll-brew::-webkit-scrollbar-track, .tabulator-tableholder::-webkit-scrollbar-track { background: transparent; }
-  .scroll-brew { scrollbar-color: #3a2a22 transparent; scrollbar-width: thin; }
+  .scroll-soft { scrollbar-width: thin; scrollbar-color: #e0d3c5 transparent; }
+  .scroll-soft::-webkit-scrollbar, .tabulator-tableholder::-webkit-scrollbar { width: 10px; height: 10px; }
+  .scroll-soft::-webkit-scrollbar-thumb, .tabulator-tableholder::-webkit-scrollbar-thumb { background: #e0d3c5; border-radius: 99px; border: 3px solid #fff; }
 
-  /* Sidebar ambience */
-  #sidebar { background:
-      radial-gradient(120% 60% at 0% 0%, rgba(192,127,62,.10), transparent 60%),
-      radial-gradient(80% 40% at 100% 100%, rgba(214,168,108,.05), transparent 60%),
-      var(--roast); transition: width .35s cubic-bezier(.2,.8,.2,1); }
-  @media (min-width: 768px) { #sidebar.wide { width: min(820px, 62vw) !important; } }
+  #sidebar { transition: width .3s cubic-bezier(.2,.8,.2,1); }
+  @media (min-width: 768px) { #sidebar.wide { width: min(860px, 62vw) !important; } }
 
-  /* Logo steam */
-  .steam { animation: steam 2.6s ease-in-out infinite; transform-box: fill-box; opacity: 0; }
-  .s2 { animation-delay: .7s; } .s3 { animation-delay: 1.4s; }
-  @keyframes steam { 0% { opacity: 0; transform: translateY(3px); } 45% { opacity: .95; } 100% { opacity: 0; transform: translateY(-4px); } }
+  /* Tabs — Material-style pill segmented control */
+  .tab { flex:1; display:flex; align-items:center; justify-content:center; gap:8px; height:40px; border-radius:999px; font-size:14px; font-weight:600; color: var(--mocha); transition: background .15s, color .15s; }
+  .tab:hover { color: var(--espresso); background: rgba(245,237,228,.7); }
+  .tab.active { background: var(--espresso); color: #fff; }
+  .tab .n { width:20px; height:20px; border-radius:99px; display:grid; place-items:center; font-size:11px; font-weight:700; background: var(--milk); color: var(--roast); }
+  .tab.active .n { background: rgba(255,255,255,.18); color:#fff; }
+  .panel { animation: rise .3s ease both; }
+  @keyframes rise { from { opacity:0; transform: translateY(4px);} to { opacity:1; transform:none; } }
 
-  /* Tabs */
-  .tab-btn { display:flex; flex-direction:column; align-items:center; gap:4px; padding:9px 4px 8px; border-radius:10px; font-size:12px; font-weight:600; color: var(--steam); transition: all .2s; }
-  .tab-btn:hover { color: var(--latte); background: rgba(38,27,22,.6); }
-  .tab-btn.active { color: var(--foam); background: var(--mocha); box-shadow: inset 0 -2px 0 var(--crema), 0 6px 18px -8px rgba(0,0,0,.6); }
-  .tab-btn.active svg { color: var(--crema); }
-  .tab-panel { animation: fadeUp .35s ease both; }
-  @keyframes fadeUp { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform:none; } }
+  /* Typography helpers */
+  .label { font-size: 13px; font-weight: 600; color: var(--espresso); }
+  .hint  { font-size: 13px; color: var(--mocha); line-height: 1.5; }
 
-  /* Cards + controls */
-  .card { background: rgba(34,24,19,.85); border: 1px solid #33251e; border-radius: 16px; padding: 16px; }
-  .eyebrow { font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--steam); font-weight: 700; }
-  .field { width:100%; background: var(--bean); border:1px solid var(--cocoa); border-radius:10px; padding:9px 12px; font-size:13px; color: var(--foam); outline:none; transition: border-color .15s, box-shadow .15s; }
-  .field:focus { border-color: var(--crema); box-shadow: 0 0 0 3px rgba(214,168,108,.15); }
-  .field::placeholder { color: #6f5d50; }
-  select.field { appearance:none; -webkit-appearance:none; padding-right:32px; cursor:pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23d6a86c' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat:no-repeat; background-position: right 11px center; }
-  select.field option { background: var(--roast); color: var(--foam); }
-  .btn-primary { display:inline-flex; align-items:center; justify-content:center; gap:8px; background: linear-gradient(135deg, #e0b57a, #c07f3e); color:#1a100a; font-weight:700; font-size:13px; border-radius:10px; padding:10px 14px; transition: transform .15s, box-shadow .2s, filter .2s; box-shadow: 0 8px 20px -10px rgba(192,127,62,.8); white-space: nowrap; }
-  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.05); box-shadow: 0 12px 24px -10px rgba(192,127,62,.9); }
-  .btn-primary:active:not(:disabled) { transform: translateY(0); }
-  .btn-ghost { display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid var(--cocoa); color:#e8dccd; font-size:12.5px; font-weight:600; border-radius:10px; padding:8px 12px; transition: all .15s; white-space: nowrap; }
-  .btn-ghost:hover:not(:disabled) { background: var(--mocha); border-color: rgba(214,168,108,.5); color: var(--foam); }
-  button:disabled { opacity:.42; cursor:not-allowed; box-shadow:none; }
+  /* Controls */
+  .field { width:100%; height:44px; background:#fff; border:1px solid #dccfc1; border-radius:12px; padding:0 14px; font-size:14px; color: var(--espresso); outline:none; transition: border-color .15s, box-shadow .15s; }
+  .field:hover { border-color: #c9b8a6; }
+  .field:focus { border-color: var(--caramel); box-shadow: 0 0 0 3px rgba(138,79,36,.14); }
+  .field::placeholder { color: #a8978a; }
+  select.field { appearance:none; -webkit-appearance:none; padding-right:36px; cursor:pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236e5b4e' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position: right 14px center; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:44px; padding:0 20px; border-radius:999px; font-size:14px; font-weight:600; transition: background .15s, box-shadow .15s, border-color .15s, color .15s; white-space:nowrap; }
+  .btn-primary { background: var(--caramel); color:#fff; }
+  .btn-primary:hover:not(:disabled) { background:#74411c; box-shadow: 0 4px 14px -6px rgba(138,79,36,.7); }
+  .btn-outline { background:#fff; color: var(--caramel); border:1px solid #dccfc1; }
+  .btn-outline:hover:not(:disabled) { background: var(--milk); border-color: #c9b8a6; }
+  .btn-text { height:36px; padding:0 12px; color: var(--caramel); }
+  .btn-text:hover:not(:disabled) { background: var(--milk); }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
 
   /* Drop zone */
-  .dropzone { position:relative; border: 1.5px dashed rgba(214,168,108,.45); border-radius: 20px; padding: 26px 18px 20px; text-align:center; cursor:pointer; transition: all .25s;
-    background: radial-gradient(100% 120% at 50% 0%, rgba(214,168,108,.10), transparent 70%), rgba(18,12,9,.55); }
-  .dropzone:hover, .dropzone.dz-active { border-color: var(--crema); background: radial-gradient(100% 120% at 50% 0%, rgba(214,168,108,.2), transparent 70%), rgba(18,12,9,.7); transform: translateY(-1px); box-shadow: 0 14px 40px -18px rgba(214,168,108,.55); }
-  .dropzone:focus-visible { outline: 2px solid var(--crema); outline-offset: 3px; }
-  .bean-float { animation: float 3.2s ease-in-out infinite; }
-  @keyframes float { 0%,100% { transform: translateY(0) rotate(-8deg); } 50% { transform: translateY(-5px) rotate(6deg); } }
-  .ext-pill { font-family: 'JetBrains Mono', monospace; padding: 2px 7px; border-radius: 99px; background: rgba(58,42,34,.7); color: var(--latte); border: 1px solid rgba(214,168,108,.15); }
+  .drop { display:block; width:100%; border:2px dashed #d9c6b2; border-radius:24px; padding:40px 24px; text-align:center; background:#fff; cursor:pointer; transition: border-color .2s, background .2s; }
+  .drop.compact { padding:20px 24px; }
+  .drop.compact .full { display:none; }
+  .drop.compact .replace { display:block !important; }
+  .drop:hover, .drop.on { border-color: var(--caramel); background: #fffaf4; }
+  .pill { font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 3px 9px; border-radius: 99px; background: var(--milk); color: var(--roast); }
 
-  .grind-item { display:flex; gap:10px; align-items:flex-start; padding:10px; border-radius:12px; background: rgba(18,12,9,.45); border:1px solid rgba(58,42,34,.8); }
-  .grind-dot { width:26px; height:26px; flex-shrink:0; border-radius:8px; display:grid; place-items:center; font-size:14px; background: rgba(214,168,108,.12); }
-
-  /* Switch */
-  .switch { width:30px; height:18px; border-radius:99px; background:#3a2a22; position:relative; transition: background .2s; display:inline-block; }
-  .switch .knob { position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:99px; background: var(--latte); transition: all .2s; }
-  .is-on .switch { background: var(--caramel); }
-  .is-on .switch .knob { left:14px; background:#fff6e8; }
-
-  /* Range sliders */
-  input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:99px; background: linear-gradient(90deg, var(--caramel) var(--p,50%), #3a2a22 var(--p,50%)); outline:none; }
-  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#fff6e8; border:3px solid var(--caramel); cursor:pointer; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
-  input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:#fff6e8; border:3px solid var(--caramel); cursor:pointer; }
-  input[type=color] { -webkit-appearance:none; appearance:none; border:none; width:44px; height:38px; border-radius:10px; padding:0; background:none; cursor:pointer; }
-  input[type=color]::-webkit-color-swatch-wrapper { padding:0; }
-  input[type=color]::-webkit-color-swatch { border: 2px solid var(--cocoa); border-radius:10px; }
-  input[type=color]::-moz-color-swatch { border: 2px solid var(--cocoa); border-radius:10px; }
-  .swatch-btn { width:22px; height:22px; border-radius:50%; border:2px solid rgba(255,255,255,.12); transition: transform .15s; }
-  .swatch-btn:hover { transform: scale(1.15); }
-  .swatch-btn.sel { border-color: #fff6e8; box-shadow: 0 0 0 2px rgba(214,168,108,.45); }
-
-  /* Roast (basemap) cards */
-  .roast-opt { position:relative; cursor:pointer; border-radius:12px; border:1.5px solid var(--cocoa); overflow:hidden; transition: all .2s; background: var(--bean); }
-  .roast-opt:hover { border-color: rgba(214,168,108,.55); }
-  .roast-opt.sel { border-color: var(--crema); box-shadow: 0 0 0 3px rgba(214,168,108,.18); }
-  .roast-opt .pv { height:54px; }
-  .roast-opt .check { position:absolute; top:6px; right:6px; width:18px; height:18px; border-radius:50%; background: var(--crema); color:#1a100a; font-size:11px; font-weight:800; display:none; place-items:center; }
-  .roast-opt.sel .check { display:grid; }
-  .pv-dark { background: linear-gradient(160deg, transparent 44%, rgba(255,255,255,.16) 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, rgba(255,255,255,.08) 61% 62%, transparent 63%), radial-gradient(40% 60% at 90% 90%, #0b0d12, transparent), #1d2027; }
-  .pv-light { background: linear-gradient(160deg, transparent 44%, #d7d7d4 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, #e2e2de 61% 62%, transparent 63%), radial-gradient(40% 60% at 90% 90%, #d4dadc, transparent), #f4f4f1; }
-  .pv-voyager { background: linear-gradient(160deg, transparent 44%, #f7c872 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, #ffffff 61% 63%, transparent 64%), radial-gradient(40% 60% at 90% 90%, #b8d6e6, transparent), #f3efe6; }
+  /* Basemap cards */
+  .bm { cursor:pointer; border-radius:14px; border:1.5px solid var(--line); overflow:hidden; background:#fff; text-align:left; transition: border-color .15s, box-shadow .15s; }
+  .bm:hover { border-color:#c9b8a6; }
+  .bm.sel { border-color: var(--caramel); box-shadow: 0 0 0 3px rgba(138,79,36,.14); }
+  .bm .pv { height:56px; }
+  .pv-light { background: linear-gradient(160deg, transparent 44%, #d9d9d6 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, #e4e4e0 61% 62%, transparent 63%), radial-gradient(40% 60% at 90% 90%, #d2dadd, transparent), #f4f4f1; }
+  .pv-dark { background: linear-gradient(160deg, transparent 44%, rgba(255,255,255,.18) 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, rgba(255,255,255,.08) 61% 62%, transparent 63%), #1f2228; }
+  .pv-voyager { background: linear-gradient(160deg, transparent 44%, #f5c26b 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, #fff 61% 63%, transparent 64%), radial-gradient(40% 60% at 90% 90%, #b8d6e6, transparent), #f2eee5; }
   .pv-osm { background: linear-gradient(160deg, transparent 44%, #e892a2 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, #fcd6a4 61% 63%, transparent 64%), radial-gradient(40% 60% at 90% 90%, #aad3df, transparent), radial-gradient(30% 40% at 15% 20%, #c8facc, transparent), #f2efe9; }
 
-  /* Stat tiles */
-  .tile { background: rgba(18,12,9,.55); border:1px solid rgba(58,42,34,.9); border-radius:12px; padding:10px 12px; }
-  .tile .v { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; color: var(--foam); line-height: 1.1; }
-  .tile .k { font-size: 10.5px; color: var(--steam); text-transform: uppercase; letter-spacing: .12em; font-weight: 700; margin-top: 3px; }
+  /* Color swatches & sliders */
+  .sw { width:32px; height:32px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 0 1px var(--line); transition: transform .12s, box-shadow .12s; }
+  .sw:hover { transform: scale(1.08); }
+  .sw.sel { box-shadow: 0 0 0 2px var(--espresso); }
+  input[type=color] { -webkit-appearance:none; appearance:none; border:none; width:32px; height:32px; border-radius:50%; padding:0; background:none; cursor:pointer; }
+  input[type=color]::-webkit-color-swatch-wrapper { padding:0; }
+  input[type=color]::-webkit-color-swatch { border: 1px solid #c9b8a6; border-radius:50%; }
+  input[type=color]::-moz-color-swatch { border: 1px solid #c9b8a6; border-radius:50%; }
+  input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:4px; border-radius:99px; background: linear-gradient(90deg, var(--caramel) var(--p,50%), #e6dacd var(--p,50%)); outline:none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background: var(--caramel); border:3px solid #fff; box-shadow: 0 1px 4px rgba(42,27,20,.35); cursor:pointer; }
+  input[type=range]::-moz-range-thumb { width:14px; height:14px; border-radius:50%; background: var(--caramel); border:3px solid #fff; cursor:pointer; }
 
-  /* Toasts */
-  .toast { opacity:0; transform: translateY(-8px) scale(.98); transition: all .3s cubic-bezier(.2,.8,.2,1); }
+  .switch { width:36px; height:20px; border-radius:99px; background:#d9ccbe; position:relative; transition: background .2s; flex-shrink:0; }
+  .switch::after { content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:99px; background:#fff; transition: left .2s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+  .on > .switch { background: var(--caramel); }
+  .on > .switch::after { left:18px; }
+
+  details > summary { list-style:none; cursor:pointer; }
+  details > summary::-webkit-details-marker { display:none; }
+  details[open] .chev { transform: rotate(180deg); }
+
+  .stat { background: var(--milk); border-radius:16px; padding:14px 16px; }
+  .stat .v { font-size:22px; font-weight:600; color: var(--espresso); line-height:1.1; }
+  .stat .k { font-size:12px; color: var(--mocha); margin-top:4px; }
+
+  .toast { opacity:0; transform: translateY(-6px); transition: all .25s ease; }
   .toast.show { opacity:1; transform:none; }
 
   /* Loading cup */
-  .cup { width:58px; height:50px; border:3px solid var(--crema); border-top:none; border-radius: 0 0 20px 20px; position:relative; overflow:hidden; }
-  .cup .coffee { position:absolute; left:0; right:0; bottom:0; height:0; background: linear-gradient(#d19453, #6b3f1f); animation: fillcup 1.8s ease-in-out infinite; }
-  .cup-handle { width:16px; height:22px; border:3px solid var(--crema); border-left:none; border-radius: 0 12px 12px 0; margin-left:-3px; margin-top:8px; }
-  @keyframes fillcup { 0% { height:0; } 70% { height:82%; opacity:1; } 100% { height:82%; opacity:0; } }
+  .cup { width:48px; height:40px; border:3px solid var(--caramel); border-top:none; border-radius: 0 0 16px 16px; position:relative; overflow:hidden; }
+  .cup i { position:absolute; left:0; right:0; bottom:0; height:0; background: linear-gradient(#e9c9a0 0 22%, #8a4f24 22%); animation: fill 1.6s ease-in-out infinite; }
+  .cup-h { width:13px; height:18px; border:3px solid var(--caramel); border-left:none; border-radius: 0 10px 10px 0; margin-left:-3px; margin-top:6px; }
+  @keyframes fill { 0% { height:0; } 70% { height:85%; opacity:1; } 100% { height:85%; opacity:0; } }
 
-  /* MapLibre skin */
-  .maplibregl-ctrl-group { background: rgba(27,19,16,.92) !important; border: 1px solid var(--cocoa); box-shadow: 0 8px 20px -10px rgba(0,0,0,.6) !important; border-radius: 12px !important; overflow: hidden; }
-  .maplibregl-ctrl-group button + button { border-top: 1px solid var(--cocoa) !important; }
-  .maplibregl-ctrl-group button:hover { background-color: rgba(214,168,108,.12) !important; }
-  .maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter: invert(.86) sepia(.45) saturate(1.3); }
-  .maplibregl-ctrl-scale { background: rgba(18,12,9,.72); color: var(--latte); border-color: var(--latte); font-size: 10px; border-radius: 0 0 4px 4px; }
-  .maplibregl-ctrl-attrib { background: rgba(18,12,9,.72) !important; color: var(--steam); border-radius: 10px !important; }
-  .maplibregl-ctrl-attrib a { color: var(--latte) !important; }
-  .maplibregl-ctrl-attrib-button { filter: invert(.85); }
-  .maplibregl-popup-content { background: var(--roast); color: var(--foam); border: 1px solid var(--cocoa); border-radius: 14px; padding: 0; box-shadow: 0 20px 50px -15px rgba(0,0,0,.8); font-family: Inter, sans-serif; overflow: hidden; }
-  .maplibregl-popup-anchor-bottom .maplibregl-popup-tip, .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip, .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip { border-top-color: var(--roast) !important; }
-  .maplibregl-popup-anchor-top .maplibregl-popup-tip, .maplibregl-popup-anchor-top-left .maplibregl-popup-tip, .maplibregl-popup-anchor-top-right .maplibregl-popup-tip { border-bottom-color: var(--roast) !important; }
-  .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--roast) !important; }
-  .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--roast) !important; }
-  .maplibregl-popup-close-button { color: var(--latte); font-size: 18px; right: 6px; top: 6px; border-radius: 8px; width: 24px; height: 24px; }
-  .maplibregl-popup-close-button:hover { background: var(--mocha); color: var(--foam); }
-  .pop-row { display:grid; grid-template-columns: 42% 58%; gap: 8px; padding: 5px 0; border-top: 1px solid rgba(58,42,34,.6); font-size: 12px; }
-  .pop-row .k { color: var(--steam); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .pop-row .v { color: var(--foam); word-break: break-word; }
+  /* MapLibre */
+  .maplibregl-ctrl-group { border-radius:12px !important; box-shadow: 0 1px 3px rgba(42,27,20,.12), 0 4px 12px rgba(42,27,20,.08) !important; overflow:hidden; }
+  .maplibregl-ctrl-scale { background: rgba(255,255,255,.85); color: var(--roast); border-color: var(--roast); font-size: 11px; }
+  .maplibregl-popup-content { border-radius: 16px; padding: 0; box-shadow: 0 8px 30px rgba(42,27,20,.18); font-family: Inter, sans-serif; color: var(--espresso); overflow:hidden; }
+  .maplibregl-popup-close-button { font-size: 20px; width: 28px; height: 28px; right: 6px; top: 6px; border-radius: 99px; color: var(--mocha); }
+  .maplibregl-popup-close-button:hover { background: var(--milk); }
+  .pop-row { display:grid; grid-template-columns: 40% 60%; gap:10px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .pop-row .k { color: var(--mocha); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pop-row .v { word-break: break-word; }
 
-  /* Tabulator skin */
-  .tabulator { background: var(--roast); border: 1px solid var(--cocoa); border-radius: 12px; font-size: 12px; font-family: Inter, sans-serif; }
-  .tabulator .tabulator-header { background: var(--mocha); border-bottom: 1px solid var(--cocoa); color: var(--foam); }
-  .tabulator .tabulator-header .tabulator-col { background: var(--mocha); border-right: 1px solid var(--cocoa); }
-  .tabulator .tabulator-header .tabulator-col:hover { background: #2e211a !important; }
-  .tabulator .tabulator-header .tabulator-col .tabulator-col-title { font-weight: 600; color: var(--foam); }
-  .tabulator .tabulator-header .tabulator-col input { background: var(--bean) !important; border: 1px solid var(--cocoa) !important; color: var(--foam) !important; border-radius: 6px; padding: 3px 6px !important; font-size: 11px; }
-  .tabulator .tabulator-header .tabulator-col .tabulator-col-content .tabulator-col-sorter .tabulator-arrow { border-bottom-color: var(--steam); }
-  .tabulator .tabulator-tableholder { background: var(--roast); }
-  .tabulator-row { background: var(--roast) !important; color: #e8dccd; border-bottom: 1px solid #2a1f19; }
-  .tabulator-row.tabulator-row-even { background: #1f1612 !important; }
-  .tabulator-row.tabulator-selectable:hover { background: #2e211a !important; cursor: pointer; }
-  .tabulator-row.tabulator-selected { background: #4a331f !important; box-shadow: inset 3px 0 0 var(--crema); }
-  .tabulator-row .tabulator-cell { border-right: 1px solid #2a1f19; }
-  .tabulator-row .tabulator-cell.tabulator-editing { border: 1px solid var(--crema) !important; background: var(--bean) !important; }
-  .tabulator-row .tabulator-cell.tabulator-editing input { color: var(--foam) !important; }
-  .tabulator-row .tabulator-cell.cell-flash { animation: cellflash 1.2s ease; }
-  @keyframes cellflash { 0% { background: rgba(143,181,115,.45); } 100% { background: transparent; } }
-  .tabulator .tabulator-footer { background: var(--mocha); color: var(--latte); border-top: 1px solid var(--cocoa); }
-  .tabulator-placeholder-contents { color: var(--steam) !important; font-size: 13px !important; font-weight: 500 !important; }
-  .tabulator-row .tabulator-frozen { background: inherit !important; color: var(--steam); }
+  /* Tabulator */
+  .tabulator { border: 1px solid var(--line); border-radius: 16px; background:#fff; font-family: Inter, sans-serif; font-size: 13px; }
+  .tabulator .tabulator-header { background: var(--milk); border-bottom: 1px solid var(--line); color: var(--espresso); font-weight: 600; }
+  .tabulator .tabulator-header .tabulator-col { background: var(--milk); border-right: 1px solid var(--line); }
+  .tabulator .tabulator-header .tabulator-col input { border:1px solid #dccfc1 !important; border-radius: 8px; padding: 4px 8px !important; font-size: 12px; background:#fff; }
+  .tabulator .tabulator-tableholder { background:#fff; }
+  .tabulator-row { background:#fff; border-bottom: 1px solid #f3ece4; color: var(--espresso); }
+  .tabulator-row.tabulator-row-even { background: #fdfaf6; }
+  .tabulator-row.tabulator-selectable:hover { background: #f7ede2 !important; cursor: pointer; }
+  .tabulator-row.tabulator-selected { background: #f1dfcb !important; box-shadow: inset 3px 0 0 var(--caramel); }
+  .tabulator-row .tabulator-cell { border-right: 1px solid #f3ece4; padding: 8px 10px; }
+  .tabulator-row .tabulator-cell.tabulator-editing { border: 1px solid var(--caramel) !important; }
+  .tabulator-row .tabulator-cell.flash { animation: flash 1.2s ease; }
+  @keyframes flash { 0% { background: rgba(63,125,58,.22); } 100% { background: transparent; } }
+  .tabulator .tabulator-footer { background: var(--milk); border-top: 1px solid var(--line); }
+  .tabulator-placeholder-contents { color: var(--mocha) !important; font-size: 14px !important; font-weight: 500 !important; }
+  .tabulator-row .tabulator-frozen { color: var(--mocha); }
 </style>
 </head>
 
-<body class="h-full font-sans text-foam antialiased overflow-hidden">
-<noscript><div style="padding:24px;color:#f4ebe0">GIS.Coffee needs JavaScript to brew. Please enable it.</div></noscript>
+<body class="h-full font-sans antialiased overflow-hidden">
+<noscript><p style="padding:24px">GIS.Coffee needs JavaScript enabled.</p></noscript>
 
-<div id="app" class="h-full flex flex-col md:flex-row">
+<div class="h-full flex flex-col md:flex-row">
 
-  <!-- =========================== SIDEBAR =========================== -->
-  <aside id="sidebar" class="relative z-20 flex flex-col w-full md:w-[400px] h-[58vh] md:h-full shrink-0 border-b md:border-b-0 md:border-r border-cocoa/70 shadow-2xl shadow-black/50">
+  <!-- ============================== SIDEBAR ============================== -->
+  <aside id="sidebar" class="relative z-20 flex flex-col bg-white w-full md:w-[400px] h-[56vh] md:h-full shrink-0 border-b md:border-b-0 md:border-r border-line">
 
-    <!-- Header -->
-    <header class="px-5 pt-5 pb-4 border-b border-cocoa/60">
-      <div class="flex items-center justify-between gap-3">
-        <a href="./" class="flex items-center gap-3 group" aria-label="GIS.Coffee home">
-          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#e3b77c] to-[#8a5427] grid place-items-center shadow-lg shadow-black/40 ring-1 ring-white/10">
-            <svg viewBox="0 0 32 32" class="w-8 h-8 text-bean" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path class="steam" d="M11 3.5c-1.4 1.4 1.4 2.8 0 4.2"/>
-              <path class="steam s2" d="M16 2.5c-1.4 1.4 1.4 2.8 0 4.2"/>
-              <path class="steam s3" d="M21 3.5c-1.4 1.4 1.4 2.8 0 4.2"/>
-              <path d="M5 11h19v6a8 8 0 0 1-8 8h-3a8 8 0 0 1-8-8v-6z" fill="currentColor" fill-opacity=".12"/>
-              <path d="M24 13h1.5a3.5 3.5 0 0 1 0 7H23"/>
-              <path d="M4 29h22"/>
-              <circle cx="14.5" cy="17.5" r="3.4" stroke-width="1.6"/>
-              <path d="M11.1 17.5h6.8M14.5 14.1c-1.3 1.8-1.3 5 0 6.8M14.5 14.1c1.3 1.8 1.3 5 0 6.8" stroke-width="1.3"/>
-            </svg>
-          </div>
-          <div>
-            <div class="font-display text-[23px] leading-none font-semibold tracking-tight">GIS<span class="text-crema">.</span>Coffee</div>
-            <div class="text-[10px] uppercase tracking-[0.14em] text-steam mt-1.5 font-semibold whitespace-nowrap" data-brew="Freshly brewed Web GIS" data-plain="Client-side Web GIS"></div>
-          </div>
-        </a>
-        <button id="modeToggle" type="button" class="shrink-0 flex items-center gap-2 rounded-full border border-cocoa bg-mocha/70 pl-3 pr-1.5 py-1.5 text-[11px] font-semibold text-latte hover:border-crema/60 transition" title="Toggle Barista Speak (coffee puns) on or off" aria-pressed="true">
-          <span class="whitespace-nowrap">☕ Barista speak</span>
-          <span class="switch"><span class="knob"></span></span>
-        </button>
-      </div>
+    <header class="px-5 md:px-8 pt-5 md:pt-7 pb-4 md:pb-5">
+      <a href="./" class="inline-flex items-center gap-3" aria-label="GIS.Coffee home">
+        <span class="w-10 h-10 rounded-full bg-milk grid place-items-center">
+          <svg viewBox="0 0 32 32" class="w-6 h-6 text-caramel" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M11 3.5c-1.4 1.4 1.4 2.8 0 4.2M16 2.5c-1.4 1.4 1.4 2.8 0 4.2M21 3.5c-1.4 1.4 1.4 2.8 0 4.2"/>
+            <path d="M5 11h19v6a8 8 0 0 1-8 8h-3a8 8 0 0 1-8-8v-6z" fill="currentColor" fill-opacity=".14"/>
+            <path d="M24 13h1.5a3.5 3.5 0 0 1 0 7H23M4 29h22"/>
+          </svg>
+        </span>
+        <span class="font-display text-[24px] font-semibold tracking-tight">GIS<span class="text-crema">.</span>Coffee</span>
+      </a>
+      <p class="hint mt-3 hidden md:block">Freshly brewed maps. Drop in a spatial file to map it, explore its table, and export it. Free, and your files never leave your browser.</p>
     </header>
 
-    <!-- Tabs -->
-    <nav class="px-4 pt-3" aria-label="Tools">
-      <div class="grid grid-cols-3 gap-1 p-1 rounded-xl bg-bean/70 border border-cocoa/60" role="tablist">
-        <button class="tab-btn active" data-tab="grind" role="tab">
-          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><ellipse cx="12" cy="12" rx="6.2" ry="9" transform="rotate(35 12 12)"/><path d="M8.2 17.6c1.8-2 1.6-4.6 3.2-6.6s3.6-2.4 4.6-4.4"/></svg>
-          <span data-brew="Grind" data-plain="Data"></span>
-        </button>
-        <button class="tab-btn" data-tab="brew" role="tab">
-          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13v5a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6V8z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M3 21.5h16"/><path d="M8 2.5c-.8.8.8 1.6 0 2.4M12 2.5c-.8.8.8 1.6 0 2.4"/></svg>
-          <span data-brew="Brew" data-plain="Map Maker"></span>
-        </button>
-        <button class="tab-btn" data-tab="taste" role="tab">
-          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M3 14.5h18M9 4v16"/></svg>
-          <span data-brew="Taste" data-plain="Table"></span>
-        </button>
+    <nav class="px-5 md:px-8" aria-label="Steps">
+      <div class="flex gap-1 p-1 rounded-full bg-milk" role="tablist">
+        <button class="tab active" data-tab="data" role="tab"><span class="n">1</span>Data</button>
+        <button class="tab" data-tab="style" role="tab"><span class="n">2</span>Style</button>
+        <button class="tab" data-tab="table" role="tab"><span class="n">3</span>Table</button>
       </div>
     </nav>
 
-    <!-- Panels -->
-    <main id="panels" class="flex-1 overflow-y-auto scroll-brew px-4 py-4">
+    <main id="panels" class="flex-1 overflow-y-auto scroll-soft px-5 md:px-8 pt-6 md:pt-8 pb-10">
 
-      <!-- ===== TAB 1: GRIND (Data ingestion & converter) ===== -->
-      <section id="panel-grind" class="tab-panel space-y-4" role="tabpanel">
+      <!-- ============ 1. DATA ============ -->
+      <section id="panel-data" class="panel space-y-8" role="tabpanel">
         <div>
-          <h2 class="font-display text-[21px] font-semibold" data-brew="The Grinder" data-plain="Data Ingestion & Converter"></h2>
-          <p class="text-[13px] text-latte mt-1 leading-relaxed" data-brew="Toss in any grind and we'll brew it into clean GeoJSON right in your browser. No servers, no cream, no sugar." data-plain="Upload spatial data. Everything is parsed in your browser into GeoJSON; nothing is sent to a server."></p>
+          <h2 class="text-[22px] font-semibold tracking-tight">Add your data</h2>
+          <p class="hint mt-1">Your file is converted to GeoJSON and drawn on the map.</p>
         </div>
 
-        <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Upload a spatial file">
-          <div class="mx-auto w-14 h-14 rounded-2xl bg-crema/15 grid place-items-center mb-3 ring-1 ring-crema/25">
-            <svg viewBox="0 0 24 24" class="w-8 h-8 text-crema bean-float" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><ellipse cx="12" cy="12" rx="6.2" ry="9" transform="rotate(35 12 12)" fill="currentColor" fill-opacity=".18"/><path d="M8.2 17.6c1.8-2 1.6-4.6 3.2-6.6s3.6-2.4 4.6-4.4"/></svg>
+        <label id="dropzone" class="drop" tabindex="0">
+          <svg viewBox="0 0 24 24" class="full w-10 h-10 mx-auto text-caramel" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          <div class="full text-[16px] font-semibold mt-4">Drag a file here</div><div class="replace hidden text-[14px] font-semibold">Drop another file to replace this layer</div>
+          <div class="full hint mt-1">or <span class="text-caramel font-semibold underline underline-offset-2">browse your computer</span></div>
+          <div class="full mt-5 flex flex-wrap justify-center gap-1.5">
+            <span class="pill">.zip (Shapefile)</span><span class="pill">.kml</span><span class="pill">.kmz</span><span class="pill">.geojson</span><span class="pill">.csv</span><span class="pill">.gpkg</span>
           </div>
-          <div class="font-display text-[19px] font-semibold" data-brew="Drop your beans here" data-plain="Drop a spatial file here"></div>
-          <div class="text-[12.5px] text-latte mt-1" data-brew="or click to raid the pantry" data-plain="or click to browse your files"></div>
-          <div class="mt-4 flex flex-wrap justify-center gap-1.5 text-[10.5px]">
-            <span class="ext-pill">.zip</span><span class="ext-pill">.kml</span><span class="ext-pill">.kmz</span><span class="ext-pill">.geojson</span><span class="ext-pill">.json</span><span class="ext-pill">.csv</span><span class="ext-pill">.gpkg</span><span class="ext-pill">.gdb</span>
-          </div>
-          <input id="fileInput" type="file" class="hidden" accept=".zip,.kml,.kmz,.geojson,.json,.csv,.tsv,.txt,.gpkg,.gdb,.shp" />
+          <input id="fileInput" type="file" class="sr-only" accept=".zip,.kml,.kmz,.geojson,.json,.csv,.tsv,.txt,.gpkg,.gdb,.shp" />
+        </label>
+
+        <div id="sampleRow" class="flex items-center justify-between -mt-4">
+          <span class="hint">No file handy?</span>
+          <button id="sampleBtn" class="btn btn-text">Try sample data</button>
         </div>
 
-        <!-- Error alert -->
-        <div id="errorBox" class="hidden rounded-2xl border border-berry/40 bg-berry/10 p-4 flex gap-3" role="alert">
-          <div class="shrink-0 w-8 h-8 rounded-full bg-berry/20 grid place-items-center text-berry font-bold">!</div>
-          <div class="min-w-0 flex-1">
-            <div class="text-[13px] font-bold text-[#f3b1a9]" data-brew="Bitter brew!" data-plain="Import failed"></div>
-            <p id="errorMsg" class="text-[13px] text-foam/90 mt-0.5 leading-snug"></p>
-            <p id="errorDetail" class="text-[12px] text-latte mt-1.5 leading-snug"></p>
+        <div id="errorBox" class="hidden rounded-2xl bg-[#fcebea] p-5" role="alert">
+          <div class="flex gap-3">
+            <svg viewBox="0 0 24 24" class="w-5 h-5 shrink-0 text-berry mt-0.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>
+            <div class="flex-1 min-w-0">
+              <p id="errorMsg" class="text-[14px] font-medium text-[#8c1d18] leading-snug"></p>
+              <p id="errorDetail" class="text-[13px] text-[#5f2b27] mt-1.5 leading-snug"></p>
+            </div>
+            <button id="errorClose" class="shrink-0 w-7 h-7 rounded-full text-[#8c1d18] hover:bg-white/60" aria-label="Dismiss">✕</button>
           </div>
-          <button id="errorClose" class="shrink-0 w-6 h-6 rounded-md text-latte hover:bg-mocha hover:text-foam" aria-label="Dismiss">×</button>
         </div>
 
-        <!-- Brew card (dataset summary) -->
-        <div id="brewCard" class="hidden card"></div>
+        <div id="layerCard" class="hidden"></div>
 
-        <!-- Grind menu -->
-        <div class="card">
-          <div class="flex items-center justify-between mb-3">
-            <div class="eyebrow" data-brew="Grind menu" data-plain="Supported formats"></div>
-            <span class="text-[11px] text-steam" data-brew="all brewed client-side" data-plain="parsed client-side"></span>
+        <div>
+          <h3 class="label">Download as</h3>
+          <p class="hint mt-0.5 mb-3">Convert your layer to another format.</p>
+          <div class="grid grid-cols-3 gap-2">
+            <button class="btn btn-outline exp" data-fmt="geojson" disabled>GeoJSON</button>
+            <button class="btn btn-outline exp" data-fmt="kml" disabled>KML</button>
+            <button class="btn btn-outline exp" data-fmt="csv" disabled>CSV</button>
           </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div class="grind-item"><div class="grind-dot">🫘</div><div class="min-w-0"><div class="text-[12.5px] font-semibold" data-brew="Coarse Grind" data-plain="Shapefile"></div><div class="text-[11px] text-steam" data-brew="Zipped Shapefile · .zip" data-plain="Zipped · .zip"></div></div></div>
-            <div class="grind-item"><div class="grind-dot">🫖</div><div class="min-w-0"><div class="text-[12.5px] font-semibold" data-brew="French Press" data-plain="KML / KMZ"></div><div class="text-[11px] text-steam" data-brew="KML / KMZ" data-plain=".kml · .kmz"></div></div></div>
-            <div class="grind-item"><div class="grind-dot">☕</div><div class="min-w-0"><div class="text-[12.5px] font-semibold" data-brew="Pour Over" data-plain="GeoJSON / JSON"></div><div class="text-[11px] text-steam" data-brew="GeoJSON / JSON" data-plain="incl. Esri JSON"></div></div></div>
-            <div class="grind-item"><div class="grind-dot">🧊</div><div class="min-w-0"><div class="text-[12.5px] font-semibold" data-brew="Cold Brew" data-plain="CSV"></div><div class="text-[11px] text-steam" data-brew="CSV · Latte/Long Black" data-plain="Lat/Lon or X/Y columns"></div></div></div>
-            <div class="grind-item"><div class="grind-dot">⚡</div><div class="min-w-0"><div class="text-[12.5px] font-semibold" data-brew="Espresso Shot" data-plain="GeoPackage"></div><div class="text-[11px] text-steam" data-brew="GeoPackage · .gpkg" data-plain=".gpkg (vector)"></div></div></div>
-            <div class="grind-item opacity-80"><div class="grind-dot">🦝</div><div class="min-w-0"><div class="text-[12.5px] font-semibold" data-brew="Kopi Luwak" data-plain="File Geodatabase"></div><div class="text-[11px] text-steam" data-brew=".gdb · rare, rarely brews" data-plain=".gdb · limited support"></div></div></div>
-          </div>
-          <button id="sampleBtn" class="btn-ghost w-full mt-3">
-            <span>🥐</span><span data-brew="No beans? Try the House Sample" data-plain="Load sample data"></span>
-          </button>
+          <p class="hint text-[12px] mt-3">CSV includes latitude/longitude (the centroid for lines and polygons) and a WKT geometry column.</p>
         </div>
 
-        <!-- Export -->
-        <div class="card space-y-3">
-          <div class="flex items-center justify-between">
-            <div class="eyebrow" data-brew="To-Go Cup · Converter" data-plain="Export · Converter"></div>
-            <span id="exportState" class="text-[11px] text-steam"></span>
+        <details class="rounded-2xl bg-milk/60 px-5 py-4">
+          <summary class="flex items-center justify-between label">Supported formats
+            <svg class="chev w-4 h-4 text-mocha transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+          </summary>
+          <ul class="mt-3 space-y-2 hint">
+            <li><b class="text-espresso font-semibold">Shapefile</b>: zip the .shp, .shx, .dbf and .prj together</li>
+            <li><b class="text-espresso font-semibold">KML / KMZ</b>: Google Earth files</li>
+            <li><b class="text-espresso font-semibold">GeoJSON / JSON</b>: including Esri JSON</li>
+            <li><b class="text-espresso font-semibold">CSV</b>: needs latitude/longitude or X/Y columns</li>
+            <li><b class="text-espresso font-semibold">GeoPackage</b>: vector layers (.gpkg)</li>
+            <li><b class="text-espresso font-semibold">File Geodatabase</b>: not readable in a browser; export it to one of the formats above</li>
+          </ul>
+        </details>
+      </section>
+
+      <!-- ============ 2. STYLE ============ -->
+      <section id="panel-style" class="panel hidden space-y-8" role="tabpanel">
+        <div>
+          <h2 class="text-[22px] font-semibold tracking-tight">Style your map</h2>
+          <p class="hint mt-1">Add a title, pick a basemap and colors, then download a PNG.</p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label for="titleInput" class="label">Title</label>
+            <input id="titleInput" class="field mt-1.5" maxlength="90" placeholder="e.g. Coffee shops in Minneapolis" />
           </div>
+          <div>
+            <label for="subtitleInput" class="label">Subtitle</label>
+            <input id="subtitleInput" class="field mt-1.5" maxlength="160" placeholder="e.g. Source: City open data, 2026" />
+          </div>
+        </div>
+
+        <div>
+          <div class="label mb-3">Basemap</div>
+          <div class="grid grid-cols-2 gap-3">
+            <button class="bm sel" data-basemap="light"><div class="pv pv-light"></div><div class="px-3 py-2.5 text-[13px] font-semibold">Light</div></button>
+            <button class="bm" data-basemap="voyager"><div class="pv pv-voyager"></div><div class="px-3 py-2.5 text-[13px] font-semibold">Streets</div></button>
+            <button class="bm" data-basemap="dark"><div class="pv pv-dark"></div><div class="px-3 py-2.5 text-[13px] font-semibold">Dark</div></button>
+            <button class="bm" data-basemap="osm"><div class="pv pv-osm"></div><div class="px-3 py-2.5 text-[13px] font-semibold">OpenStreetMap</div></button>
+          </div>
+        </div>
+
+        <div>
+          <div class="label mb-3">Layer color</div>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <div id="swatches" class="contents"></div>
+            <input id="colorPicker" type="color" value="#b8662a" title="Custom color" aria-label="Custom color" />
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between"><span class="label">Opacity</span><span id="opacityVal" class="hint font-mono">85%</span></div>
+          <input id="opacitySlider" class="mt-3" type="range" min="5" max="100" value="85" aria-label="Opacity" />
+        </div>
+
+        <details class="rounded-2xl border border-line px-5 py-4">
+          <summary class="flex items-center justify-between label">More options
+            <svg class="chev w-4 h-4 text-mocha transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+          </summary>
+          <div class="mt-5 space-y-5">
+            <div>
+              <div class="flex justify-between"><span class="hint">Line width</span><span id="widthVal" class="hint font-mono">2</span></div>
+              <input id="widthSlider" class="mt-3" type="range" min="0" max="8" step="0.5" value="2" aria-label="Line width" />
+            </div>
+            <div>
+              <div class="flex justify-between"><span class="hint">Point size</span><span id="radiusVal" class="hint font-mono">6</span></div>
+              <input id="radiusSlider" class="mt-3" type="range" min="2" max="18" step="1" value="6" aria-label="Point size" />
+            </div>
+            <button id="legendToggle" type="button" class="on w-full flex items-center justify-between hint"><span>Show legend</span><span class="switch"></span></button>
+            <button id="serifToggle" type="button" class="on w-full flex items-center justify-between hint"><span>Serif title font</span><span class="switch"></span></button>
+          </div>
+        </details>
+
+        <div class="pt-2">
           <div class="flex gap-2">
-            <select id="exportFmt" class="field flex-1" aria-label="Export format">
-              <option value="geojson" data-brew="Pour Over · GeoJSON" data-plain="GeoJSON (.geojson)"></option>
-              <option value="kml" data-brew="French Press · KML" data-plain="KML (.kml)"></option>
-              <option value="csv" data-brew="Cold Brew · CSV" data-plain="CSV (.csv)"></option>
-            </select>
-            <button id="exportBtn" class="btn-primary" disabled>
+            <button id="printBtn" class="btn btn-primary flex-1">
               <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
-              <span data-brew="Order to go" data-plain="Download"></span>
+              Download map (PNG)
             </button>
+            <select id="shotSize" class="field !w-[88px] !rounded-full" aria-label="Resolution">
+              <option value="1">1×</option><option value="2" selected>2×</option><option value="3">3×</option>
+            </select>
           </div>
-          <p class="text-[11.5px] text-steam leading-snug" data-brew="Cold Brew CSVs pour latitude/longitude columns (centroids for shapes) plus a full WKT geometry column." data-plain="CSV exports include latitude/longitude (centroid for non-point features) plus a WKT geometry column."></p>
+          <p class="hint text-[12px] mt-3">Saves what you see on the map, including the title and legend. 2× is best for slides and print.</p>
         </div>
       </section>
 
-      <!-- ===== TAB 2: BREW (Map maker) ===== -->
-      <section id="panel-brew" class="tab-panel hidden space-y-4" role="tabpanel">
-        <div>
-          <h2 class="font-display text-[21px] font-semibold" data-brew="The Brew Bar" data-plain="Cartographic Map Maker"></h2>
-          <p class="text-[13px] text-latte mt-1 leading-relaxed" data-brew="Pick your roast, pour your colors, and write it on the menu board." data-plain="Set the title, basemap and symbology, then export a PNG."></p>
-        </div>
-
-        <div class="card space-y-3">
-          <div class="eyebrow" data-brew="Menu board · Titles" data-plain="Map titles"></div>
+      <!-- ============ 3. TABLE ============ -->
+      <section id="panel-table" class="panel hidden space-y-8" role="tabpanel">
+        <div class="flex items-start justify-between gap-4">
           <div>
-            <label for="titleInput" class="text-[12px] text-latte mb-1 block" data-brew="Map title" data-plain="Map title"></label>
-            <input id="titleInput" class="field" maxlength="90" value="Freshly Brewed Map" />
+            <h2 class="text-[22px] font-semibold tracking-tight">Explore the table</h2>
+            <p class="hint mt-1">Click a row to zoom to it. Double-click a cell to edit it.</p>
           </div>
+          <button id="widenBtn" class="btn btn-outline !h-9 !px-4 hidden md:inline-flex shrink-0" title="Make the panel wider">Expand</button>
+        </div>
+
+        <div id="tableEmpty" class="rounded-3xl bg-milk/70 px-6 py-12 text-center">
+          <div class="text-4xl">☕</div>
+          <p class="text-[16px] font-semibold mt-3">Nothing brewing yet</p>
+          <p class="hint mt-1">Add a file in step 1 to see its attributes here.</p>
+          <button class="btn btn-primary mt-6" data-goto="data">Add data</button>
+        </div>
+
+        <div id="tableBody" class="hidden space-y-8">
           <div>
-            <label for="subtitleInput" class="text-[12px] text-latte mb-1 block" data-brew="Map subtitle" data-plain="Map subtitle"></label>
-            <input id="subtitleInput" class="field" maxlength="160" value="Served hot by GIS.Coffee" />
+            <div class="flex items-center justify-between mb-3 text-[13px]">
+              <span id="rowCount" class="text-mocha"></span>
+              <span id="editCount" class="text-matcha font-semibold"></span>
+            </div>
+            <div id="grid" class="h-[340px]"></div>
           </div>
-          <div class="grid grid-cols-2 gap-2">
-            <select id="titleFont" class="field" aria-label="Title font">
-              <option value="serif" data-brew="Café serif" data-plain="Serif"></option>
-              <option value="sans" data-brew="Modern sans" data-plain="Sans-serif"></option>
-            </select>
-            <button id="legendToggle" type="button" class="btn-ghost is-on justify-between">
-              <span data-brew="Show legend" data-plain="Show legend"></span>
-              <span class="switch"><span class="knob"></span></span>
-            </button>
-          </div>
-        </div>
 
-        <div class="card space-y-3">
-          <div class="eyebrow" data-brew="Roast profile · Basemap" data-plain="Basemap"></div>
-          <div id="roastGrid" class="grid grid-cols-2 gap-2">
-            <div class="roast-opt sel" data-basemap="dark"><div class="pv pv-dark"></div><div class="check">✓</div><div class="px-2.5 py-2"><div class="text-[12.5px] font-semibold" data-brew="Dark Roast" data-plain="Dark"></div><div class="text-[10.5px] text-steam">Carto Dark Matter</div></div></div>
-            <div class="roast-opt" data-basemap="light"><div class="pv pv-light"></div><div class="check">✓</div><div class="px-2.5 py-2"><div class="text-[12.5px] font-semibold" data-brew="Light Roast" data-plain="Light"></div><div class="text-[10.5px] text-steam">Carto Positron</div></div></div>
-            <div class="roast-opt" data-basemap="voyager"><div class="pv pv-voyager"></div><div class="check">✓</div><div class="px-2.5 py-2"><div class="text-[12.5px] font-semibold" data-brew="Medium Roast" data-plain="Voyager"></div><div class="text-[10.5px] text-steam">Carto Voyager</div></div></div>
-            <div class="roast-opt" data-basemap="osm"><div class="pv pv-osm"></div><div class="check">✓</div><div class="px-2.5 py-2"><div class="text-[12.5px] font-semibold" data-brew="House Blend" data-plain="OpenStreetMap"></div><div class="text-[10.5px] text-steam">OpenStreetMap Standard</div></div></div>
-          </div>
-        </div>
-
-        <div class="card space-y-4">
-          <div class="eyebrow" data-brew="Pour style · Symbology" data-plain="Layer symbology"></div>
           <div>
-            <div class="text-[12px] text-latte mb-1.5" data-brew="Roast color (fill · stroke · point)" data-plain="Color (fill · stroke · point)"></div>
-            <div class="flex items-center gap-3">
-              <input id="colorPicker" type="color" value="#d6a86c" aria-label="Layer color" />
-              <code id="colorHex" class="font-mono text-[12px] text-latte w-16">#D6A86C</code>
-              <div id="swatches" class="flex flex-wrap gap-1.5"></div>
+            <h3 class="label">Summarize a field</h3>
+            <select id="fieldSelect" class="field mt-2" aria-label="Field"></select>
+            <div class="grid grid-cols-3 gap-2 mt-4">
+              <div class="stat"><div class="v" id="stTotal">–</div><div class="k">Records</div></div>
+              <div class="stat"><div class="v" id="stUnique">–</div><div class="k">Unique values</div></div>
+              <div class="stat"><div class="v" id="stFill">–</div><div class="k">Filled in</div></div>
             </div>
-          </div>
-          <div>
-            <div class="flex justify-between text-[12px] mb-1.5"><span class="text-latte" data-brew="Strength (opacity)" data-plain="Opacity"></span><span id="opacityVal" class="font-mono text-foam">80%</span></div>
-            <input id="opacitySlider" type="range" min="5" max="100" value="80" aria-label="Opacity" />
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <div class="flex justify-between text-[12px] mb-1.5"><span class="text-latte" data-brew="Pour width" data-plain="Stroke width"></span><span id="widthVal" class="font-mono text-foam">1.5</span></div>
-              <input id="widthSlider" type="range" min="0" max="8" step="0.5" value="1.5" aria-label="Stroke width" />
+            <div id="numStats" class="hidden grid grid-cols-3 gap-2 mt-2">
+              <div class="stat"><div class="v !text-[17px]" id="stMin">–</div><div class="k">Min</div></div>
+              <div class="stat"><div class="v !text-[17px]" id="stMean">–</div><div class="k">Average</div></div>
+              <div class="stat"><div class="v !text-[17px]" id="stMax">–</div><div class="k">Max</div></div>
             </div>
-            <div>
-              <div class="flex justify-between text-[12px] mb-1.5"><span class="text-latte" data-brew="Bean size" data-plain="Point size"></span><span id="radiusVal" class="font-mono text-foam">6</span></div>
-              <input id="radiusSlider" type="range" min="2" max="18" step="1" value="6" aria-label="Point size" />
-            </div>
-          </div>
-        </div>
-
-        <div class="card space-y-3">
-          <div class="eyebrow" data-brew="Pull a shot · PNG export" data-plain="Print map · PNG export"></div>
-          <div class="flex gap-2">
-            <select id="shotSize" class="field flex-1" aria-label="Export resolution">
-              <option value="1" data-brew="Single shot · 1×" data-plain="Standard · 1×"></option>
-              <option value="2" selected data-brew="Doppio · 2×" data-plain="High-res · 2×"></option>
-              <option value="3" data-brew="Triple ristretto · 3×" data-plain="Ultra · 3×"></option>
-            </select>
-            <button id="printBtn" class="btn-primary">
-              <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/></svg>
-              <span data-brew="Pull a Shot" data-plain="Print Map"></span>
-            </button>
-          </div>
-          <p class="text-[11.5px] text-steam leading-snug" data-brew="Captures the current extent with your menu board and legend, served as a crisp PNG." data-plain="Exports the current map extent with title overlay and legend as a PNG."></p>
-        </div>
-      </section>
-
-      <!-- ===== TAB 3: TASTE (Table & analytics) ===== -->
-      <section id="panel-taste" class="tab-panel hidden space-y-4" role="tabpanel">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <h2 class="font-display text-[21px] font-semibold" data-brew="The Cupping Room" data-plain="Table Explorer & Analytics"></h2>
-            <p class="text-[13px] text-latte mt-1 leading-relaxed" data-brew="Taste every bean. Click a row to fly there; double-click a cell to re-season it." data-plain="Click a row to zoom to it; double-click a cell to edit."></p>
-          </div>
-          <button id="widenBtn" class="btn-ghost hidden md:inline-flex shrink-0" title="Widen the sidebar for the table">
-            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h5v5M9 20H4v-5M20 4l-7 7M4 20l7-7"/></svg>
-            <span id="widenLabel">Widen</span>
-          </button>
-        </div>
-
-        <div id="tasteEmpty" class="card text-center py-10">
-          <div class="text-4xl mb-2">🫗</div>
-          <div class="font-display text-lg" data-brew="Your cup is empty" data-plain="No data loaded"></div>
-          <p class="text-[12.5px] text-latte mt-1" data-brew="Grind some data first, then come back for a tasting." data-plain="Load a dataset in the Data tab to explore its attributes."></p>
-          <button class="btn-primary mt-4" data-goto="grind"><span data-brew="Head to the Grinder" data-plain="Go to Data"></span></button>
-        </div>
-
-        <div id="tasteBody" class="hidden space-y-4">
-          <div class="flex items-center justify-between text-[12px]">
-            <span id="rowCount" class="text-latte"></span>
-            <span id="editCount" class="text-matcha font-semibold"></span>
-          </div>
-          <div id="grid" class="h-[360px]"></div>
-
-          <div class="card space-y-3">
-            <div class="flex items-center justify-between gap-2">
-              <div class="eyebrow" data-brew="Flavor profile · Field summary" data-plain="Field summary"></div>
-            </div>
-            <select id="fieldSelect" class="field" aria-label="Attribute field"></select>
-            <div class="grid grid-cols-3 gap-2">
-              <div class="tile"><div class="v" id="stTotal">–</div><div class="k" data-brew="Beans" data-plain="Records"></div></div>
-              <div class="tile"><div class="v" id="stUnique">–</div><div class="k" data-brew="Unique notes" data-plain="Unique"></div></div>
-              <div class="tile"><div class="v" id="stFill">–</div><div class="k" data-brew="Fullness" data-plain="Filled"></div></div>
-            </div>
-            <div id="numTiles" class="hidden grid grid-cols-3 gap-2">
-              <div class="tile"><div class="v text-[16px]" id="stMin">–</div><div class="k">Min</div></div>
-              <div class="tile"><div class="v text-[16px]" id="stMean">–</div><div class="k" data-brew="Avg sip" data-plain="Mean"></div></div>
-              <div class="tile"><div class="v text-[16px]" id="stMax">–</div><div class="k">Max</div></div>
-            </div>
-            <div class="relative h-[250px]"><canvas id="chart"></canvas></div>
-            <p class="text-[11.5px] text-steam" data-brew="Bars: total beans, unique notes, then the top 5 most common flavors in this field." data-plain="Bars show total records, unique values, then the top 5 most frequent values."></p>
+            <div class="relative h-[260px] mt-6"><canvas id="chart" aria-label="Field summary chart"></canvas></div>
+            <p class="hint text-[12px] mt-2">Total records, unique values, and the 5 most common values.</p>
           </div>
         </div>
       </section>
     </main>
 
-    <footer class="px-5 py-3 border-t border-cocoa/60 flex items-center justify-between text-[11px] text-steam">
-      <span data-brew="Brewed in Minnesota · $0 server bill" data-plain="Static app · no backend"></span>
-      <span class="font-mono">v1.0</span>
+    <footer class="hidden md:flex px-8 py-4 border-t border-line items-center justify-between text-[12px] text-mocha">
+      <span>🔒 Runs entirely in your browser</span>
+      <span>Brewed in Minnesota</span>
     </footer>
   </aside>
 
-  <!-- =========================== MAP =========================== -->
-  <section id="mapWrap" class="relative flex-1 min-h-0">
+  <!-- ============================== MAP ============================== -->
+  <section id="mapWrap" class="relative flex-1 min-h-0 bg-foam">
     <div id="map" class="absolute inset-0"></div>
 
-    <!-- Title overlay -->
-    <div id="titleCard" class="absolute top-4 left-4 z-10 max-w-[min(520px,72%)] rounded-2xl bg-bean/80 backdrop-blur-md border border-white/10 pl-6 pr-5 py-4 shadow-2xl shadow-black/60 pointer-events-none overflow-hidden">
+    <div id="titleCard" class="hidden absolute top-5 left-5 z-10 max-w-[min(520px,70%)] rounded-2xl bg-white/95 backdrop-blur pl-7 pr-6 py-5 shadow-[0_2px_6px_rgba(42,27,20,.08),0_12px_32px_rgba(42,27,20,.12)] pointer-events-none overflow-hidden">
       <div data-print="swatch" class="absolute left-0 top-0 bottom-0 w-[5px] bg-crema"></div>
-      <div id="mapTitle" data-print="text" class="font-display text-[26px] leading-[1.15] font-semibold text-foam"></div>
-      <div id="mapSubtitle" data-print="text" class="text-[13.5px] leading-[1.4] text-latte mt-1"></div>
+      <div id="mapTitle" data-print="text" class="font-display text-[26px] leading-[1.15] font-semibold text-espresso"></div>
+      <div id="mapSubtitle" data-print="text" class="text-[14px] leading-[1.45] text-roast mt-1.5"></div>
     </div>
 
-    <!-- Legend -->
-    <div id="legend" class="hidden absolute left-4 bottom-4 z-10 rounded-xl bg-bean/80 backdrop-blur-md border border-white/10 px-4 py-3 shadow-xl shadow-black/50 pointer-events-none min-w-[160px] max-w-[280px]">
-      <div id="legendHead" data-print="text" class="text-[10px] uppercase tracking-[0.16em] text-steam font-bold leading-[1.3]"></div>
-      <div class="flex items-center gap-2.5 mt-2">
-        <span id="legendSwatch" data-print="swatch" class="shrink-0 w-3.5 h-3.5 rounded-full border border-white/70"></span>
-        <span id="legendName" data-print="text" class="text-[13px] font-semibold text-foam leading-[1.3] truncate"></span>
+    <div id="legend" class="hidden absolute left-5 bottom-5 z-10 rounded-2xl bg-white/95 backdrop-blur px-5 py-4 shadow-[0_2px_6px_rgba(42,27,20,.08),0_12px_32px_rgba(42,27,20,.12)] pointer-events-none min-w-[170px] max-w-[300px]">
+      <div data-print="text" class="text-[11px] uppercase tracking-[0.12em] text-mocha font-semibold leading-[1.3]">Legend</div>
+      <div class="flex items-center gap-2.5 mt-2.5">
+        <span id="legendSwatch" data-print="swatch" class="shrink-0"></span>
+        <span id="legendName" data-print="text" class="text-[14px] font-semibold text-espresso leading-[1.3] truncate"></span>
       </div>
-      <div id="legendCount" data-print="text" class="text-[11px] text-latte mt-1 leading-[1.3]"></div>
+      <div id="legendCount" data-print="text" class="text-[12px] text-mocha mt-1 leading-[1.3]"></div>
     </div>
 
-    <!-- Coordinates status -->
-    <div id="statusBar" class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 hidden sm:flex items-center gap-3 rounded-full bg-bean/80 backdrop-blur-md border border-white/10 px-4 py-1.5 text-[11px] font-mono text-latte shadow-lg pointer-events-none whitespace-nowrap">
-      <span><span id="latLabel" class="text-steam"></span> <span id="latVal" class="text-foam">–</span></span>
-      <span class="text-cocoa">|</span>
-      <span><span id="lonLabel" class="text-steam"></span> <span id="lonVal" class="text-foam">–</span></span>
-      <span class="text-cocoa">|</span>
-      <span><span class="text-steam">z</span> <span id="zoomVal" class="text-foam">–</span></span>
+    <div id="coords" class="absolute bottom-5 right-5 z-10 hidden sm:flex items-center gap-3 rounded-full bg-white/90 backdrop-blur px-4 py-1.5 text-[12px] font-mono text-roast shadow-sm pointer-events-none whitespace-nowrap" style="margin-bottom:28px">
+      <span>Lat <b id="latVal" class="font-medium text-espresso">–</b></span>
+      <span>Lon <b id="lonVal" class="font-medium text-espresso">–</b></span>
     </div>
 
-    <!-- Empty state hint -->
-    <div id="mapHint" class="absolute inset-x-0 bottom-16 z-10 flex justify-center pointer-events-none">
-      <div class="rounded-2xl bg-bean/75 backdrop-blur-md border border-crema/20 px-5 py-3 text-center shadow-xl">
-        <div class="font-display text-[15px]" data-brew="The map is warmed up and waiting for its first pour ☕" data-plain="Load a dataset to get started"></div>
-        <div class="text-[11.5px] text-steam mt-0.5" data-brew="Drop a file anywhere on the page" data-plain="Drag & drop a file anywhere"></div>
+    <!-- Welcome -->
+    <div id="welcome" class="absolute inset-0 z-10 grid place-items-center p-6 pointer-events-none">
+      <div class="pointer-events-auto max-w-[440px] w-full rounded-3xl bg-white/95 backdrop-blur px-10 py-10 text-center shadow-[0_2px_6px_rgba(42,27,20,.06),0_24px_60px_rgba(42,27,20,.14)]">
+        <div class="text-4xl">☕</div>
+        <h1 class="font-display text-[28px] font-semibold leading-tight mt-3">Put your data on the map</h1>
+        <p class="hint mt-2 text-[14px]">Drop a Shapefile, KML, GeoJSON, CSV or GeoPackage anywhere on this page.</p>
+        <div class="flex flex-wrap justify-center gap-2 mt-7">
+          <button id="welcomeUpload" class="btn btn-primary">Upload a file</button>
+          <button id="welcomeSample" class="btn btn-outline">Try sample data</button>
+        </div>
       </div>
     </div>
 
-    <!-- Toasts -->
-    <div id="toasts" class="absolute top-4 right-14 z-30 flex flex-col items-end gap-2 pointer-events-none max-w-[340px]"></div>
+    <div id="toasts" class="absolute top-5 right-16 max-sm:top-auto max-sm:bottom-6 max-sm:left-4 max-sm:right-4 max-sm:items-center z-30 flex flex-col items-end gap-2 pointer-events-none max-w-[360px]"></div>
 
-    <!-- Loading -->
-    <div id="loading" class="hidden absolute inset-0 z-40 bg-bean/60 backdrop-blur-sm grid place-items-center">
-      <div class="flex flex-col items-center gap-4 rounded-2xl bg-roast/90 border border-cocoa px-8 py-6 shadow-2xl">
-        <div class="flex items-start"><div class="cup"><div class="coffee"></div></div><div class="cup-handle"></div></div>
-        <div id="loadingMsg" class="font-display text-[15px] text-foam">Brewing…</div>
+    <div id="loading" class="hidden absolute inset-0 z-40 bg-foam/70 backdrop-blur-sm grid place-items-center">
+      <div class="flex flex-col items-center gap-4 rounded-3xl bg-white px-10 py-8 shadow-xl">
+        <div class="flex items-start"><div class="cup"><i></i></div><div class="cup-h"></div></div>
+        <div id="loadingMsg" class="text-[14px] font-medium">Brewing…</div>
       </div>
     </div>
   </section>
 </div>
 
-<!-- Full-page drop veil -->
-<div id="dropVeil" class="hidden fixed inset-0 z-50 bg-bean/85 backdrop-blur-sm grid place-items-center pointer-events-none">
-  <div class="border-2 border-dashed border-crema rounded-3xl px-14 py-12 text-center bg-roast/60">
-    <div class="text-5xl mb-3">☕</div>
-    <div class="font-display text-2xl" data-brew="Let go to start the grind" data-plain="Drop to import"></div>
-    <div class="text-latte text-sm mt-1" data-brew="Shapefile · KML/KMZ · GeoJSON · CSV · GeoPackage" data-plain="Shapefile · KML/KMZ · GeoJSON · CSV · GeoPackage"></div>
+<div id="dropVeil" class="hidden fixed inset-0 z-50 bg-foam/90 backdrop-blur-sm grid place-items-center pointer-events-none">
+  <div class="border-2 border-dashed border-caramel rounded-[32px] px-16 py-14 text-center bg-white">
+    <div class="text-5xl">☕</div>
+    <div class="font-display text-[26px] font-semibold mt-3">Drop to start brewing</div>
+    <div class="hint mt-1">Shapefile (.zip) · KML/KMZ · GeoJSON · CSV · GeoPackage</div>
   </div>
 </div>
 
-<!-- =========================== LIBRARIES =========================== -->
+<!-- Libraries -->
 <script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@6/dist/js/tabulator.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-<script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/proj4@2/dist/proj4.js"></script>
-<!-- sql.js (GeoPackage) is lazy-loaded on demand -->
+<!-- shpjs and sql.js (GeoPackage) load on demand -->
 
 <script>
 /* =====================================================================
-   GIS.Coffee — Freshly brewed, 100% client-side Web GIS
+   GIS.Coffee · client-side Web GIS
    ===================================================================== */
 (() => {
 'use strict';
 
-/* ---------------------------------------------------------------------
-   Helpers & state
---------------------------------------------------------------------- */
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const EMPTY = { type: 'FeatureCollection', features: [] };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 const fmt = (n, d = 0) => Number(n).toLocaleString(undefined, { maximumFractionDigits: d });
 const trunc = (s, n) => (s = String(s)).length > n ? s.slice(0, n - 1) + '…' : s;
+const slug = s => (String(s || '').toLowerCase().replace(/\.[a-z0-9]+$/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'gis-coffee');
 const SQLJS_BASE = 'https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/';
+const SHP_URLS = ['https://unpkg.com/shpjs@latest/dist/shp.js', 'https://cdn.jsdelivr.net/npm/shpjs@4.0.4/dist/shp.min.js'];
 
-class FormatError extends Error {
-  constructor(format, detail) { super(detail || format); this.format = format; this.detail = detail || ''; }
-}
+class FormatError extends Error { constructor(format, detail) { super(detail || format); this.format = format; this.detail = detail || ''; } }
+
+const FORMAT_NAMES = { shp: 'Shapefile', kml: 'KML', kmz: 'KMZ', geojson: 'GeoJSON', json: 'JSON', esri: 'Esri JSON', csv: 'CSV', gpkg: 'GeoPackage', sample: 'Sample data' };
 
 const state = {
-  data: null, name: '', format: '', coffee: localStorage.getItem('gc-coffee') !== '0',
-  basemap: 'dark', style: { color: '#d6a86c', opacity: 0.8, width: 1.5, radius: 6 },
+  data: null, name: '', format: '',
+  basemap: 'light', style: { color: '#b8662a', opacity: 0.85, width: 2, radius: 6 },
   table: null, tableDirty: true, chart: null, chartDirty: true, edits: 0,
-  hlAnim: null, popup: null, tab: 'grind', legend: true
+  hlAnim: null, popup: null, tab: 'data', legend: true, serif: true
 };
-const t = (brew, plain) => state.coffee ? brew : plain;
-
-const GRINDS = {
-  shp:     ['Coarse Grind · Shapefile', 'Zipped Shapefile'],
-  kml:     ['French Press · KML', 'KML'],
-  kmz:     ['French Press · KMZ', 'KMZ'],
-  geojson: ['Pour Over · GeoJSON', 'GeoJSON'],
-  json:    ['Pour Over · JSON', 'JSON'],
-  esri:    ['Americano · Esri JSON', 'Esri JSON'],
-  csv:     ['Cold Brew · CSV', 'CSV'],
-  gpkg:    ['Espresso Shot · GeoPackage', 'GeoPackage'],
-  sample:  ['House Blend · Sample', 'Sample data']
-};
-const grindLabel = k => { const g = GRINDS[k] || [k, k]; return t(g[0], g[1]); };
 
 function loadScript(src) {
   return new Promise((res, rej) => {
     const s = document.createElement('script'); s.src = src; s.async = true;
-    s.onload = res; s.onerror = () => rej(new Error('Failed to load ' + src));
+    s.onload = res; s.onerror = () => { s.remove(); rej(new Error('Failed to load ' + src)); };
     document.head.appendChild(s);
   });
 }
@@ -583,38 +492,31 @@ function downloadBlob(blob, filename) {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
-const slug = s => (String(s || '').toLowerCase().replace(/\.[a-z0-9]+$/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'gis-coffee');
 
-/* ---------------------------------------------------------------------
-   Toasts, loading & errors
---------------------------------------------------------------------- */
-function toast(msg, kind = 'info', ms = 4000) {
-  const icons = { info: '☕', ok: '✨', warn: '⚠️', err: '💥' };
-  const ring  = { info: 'border-crema/30', ok: 'border-matcha/40', warn: 'border-crema/60', err: 'border-berry/50' };
+/* ------------------------------ Feedback ------------------------------ */
+function toast(msg, kind = 'info', ms = 3500) {
+  const dot = { info: '#c98a4b', ok: '#3f7d3a', warn: '#c98a4b', err: '#b3261e' }[kind] || '#c98a4b';
   const el = document.createElement('div');
-  el.className = `toast pointer-events-auto flex items-start gap-3 rounded-xl bg-roast/95 backdrop-blur border ${ring[kind] || ring.info} px-4 py-3 shadow-2xl shadow-black/60 text-foam`;
-  el.innerHTML = `<span class="text-base leading-none mt-0.5">${icons[kind] || icons.info}</span><div class="text-[13px] leading-snug">${msg}</div>`;
+  el.className = 'toast pointer-events-auto flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_4px_20px_rgba(42,27,20,.16)] text-[13px] text-espresso';
+  el.innerHTML = `<span class="w-2 h-2 rounded-full shrink-0" style="background:${dot}"></span><div class="leading-snug">${msg}</div>`;
   $('#toasts').appendChild(el);
   requestAnimationFrame(() => el.classList.add('show'));
-  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 350); }, ms);
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, ms);
 }
-function busy(on, msg) {
-  $('#loading').classList.toggle('hidden', !on);
-  if (msg) $('#loadingMsg').textContent = msg;
-}
+function busy(on, msg) { $('#loading').classList.toggle('hidden', !on); if (msg) $('#loadingMsg').textContent = msg; }
 function showFormatError(format, detail) {
   $('#errorMsg').textContent = `Format error: ${format} could not be parsed client-side. Please convert to GeoJSON or Zipped Shapefile.`;
-  $('#errorDetail').textContent = detail || '';
-  $('#errorDetail').classList.toggle('hidden', !detail);
+  const kept = state.data ? ` Nothing new was added. The map is still showing your previous layer (${state.name}).` : '';
+  $('#errorDetail').textContent = (detail || '') + kept;
+  $('#errorDetail').classList.toggle('hidden', !(detail || kept));
+  toast(state.data ? `Import failed. Still showing ${esc(trunc(state.name, 30))}.` : 'Import failed. See the message in the panel.', 'err', 5000);
   $('#errorBox').classList.remove('hidden');
-  showTab('grind');
-  toast(t('That grind jammed the machine.', 'Import failed.') + ` <span class="text-latte">${esc(format)}</span>`, 'err', 5000);
+  showTab('data');
+  requestAnimationFrame(() => $('#errorBox').scrollIntoView({ behavior: 'smooth', block: 'center' }));
 }
 const clearError = () => $('#errorBox').classList.add('hidden');
 
-/* ---------------------------------------------------------------------
-   Map
---------------------------------------------------------------------- */
+/* -------------------------------- Map -------------------------------- */
 const OSM_STYLE = {
   version: 8,
   sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, maxzoom: 19,
@@ -622,20 +524,20 @@ const OSM_STYLE = {
   layers: [{ id: 'osm', type: 'raster', source: 'osm' }]
 };
 const BASEMAPS = {
-  dark:    { brew: 'Dark Roast',   plain: 'Dark',          style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json' },
-  light:   { brew: 'Light Roast',  plain: 'Light',         style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' },
-  voyager: { brew: 'Medium Roast', plain: 'Voyager',       style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json' },
-  osm:     { brew: 'House Blend',  plain: 'OpenStreetMap', style: OSM_STYLE }
+  light:   { name: 'Light',         style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' },
+  voyager: { name: 'Streets',       style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json' },
+  dark:    { name: 'Dark',          style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json' },
+  osm:     { name: 'OpenStreetMap', style: OSM_STYLE }
 };
 
 const map = new maplibregl.Map({
   container: 'map',
-  style: BASEMAPS.dark.style,
-  center: [-93.75, 44.97],
-  zoom: 7.4,
+  style: BASEMAPS.light.style,
+  center: [-93.6, 44.98],
+  zoom: 7.2,
   attributionControl: { compact: true },
-  preserveDrawingBuffer: true,                                           // MapLibre v4
-  canvasContextAttributes: { antialias: true, preserveDrawingBuffer: true } // MapLibre v5
+  preserveDrawingBuffer: true,
+  canvasContextAttributes: { antialias: true, preserveDrawingBuffer: true }
 });
 map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
 map.addControl(new maplibregl.FullscreenControl({ container: $('#mapWrap') }), 'top-right');
@@ -645,196 +547,167 @@ map.on('error', e => console.warn('[map]', e && e.error ? e.error.message : e));
 const POLY  = ['match', ['geometry-type'], ['Polygon', 'MultiPolygon'], true, false];
 const LINEY = ['match', ['geometry-type'], ['Polygon', 'MultiPolygon', 'LineString', 'MultiLineString'], true, false];
 const PTS   = ['match', ['geometry-type'], ['Point', 'MultiPoint'], true, false];
-const HIT_LAYERS = ['brew-point', 'brew-line', 'brew-fill'];
+const HIT = ['lyr-point', 'lyr-line', 'lyr-fill'];
 
 function addDataLayers() {
-  if (!map.getSource('brew'))    map.addSource('brew', { type: 'geojson', data: state.data || EMPTY });
-  if (!map.getSource('brew-hl')) map.addSource('brew-hl', { type: 'geojson', data: EMPTY });
-  const s = state.style;
-  if (!map.getLayer('brew-fill')) map.addLayer({ id: 'brew-fill', type: 'fill', source: 'brew', filter: POLY,
-    paint: { 'fill-color': s.color, 'fill-opacity': s.opacity * 0.55 } });
-  if (!map.getLayer('brew-line')) map.addLayer({ id: 'brew-line', type: 'line', source: 'brew', filter: LINEY,
-    layout: { 'line-join': 'round', 'line-cap': 'round' },
-    paint: { 'line-color': s.color, 'line-width': s.width, 'line-opacity': Math.min(1, s.opacity + 0.15) } });
-  if (!map.getLayer('brew-point')) map.addLayer({ id: 'brew-point', type: 'circle', source: 'brew', filter: PTS,
-    paint: { 'circle-color': s.color, 'circle-radius': s.radius, 'circle-opacity': s.opacity,
-             'circle-stroke-color': '#fff8ef', 'circle-stroke-width': 1.2, 'circle-stroke-opacity': Math.min(1, s.opacity + 0.2) } });
-  // Highlight layers
-  if (!map.getLayer('hl-fill')) map.addLayer({ id: 'hl-fill', type: 'fill', source: 'brew-hl', filter: POLY,
-    paint: { 'fill-color': '#fff6e8', 'fill-opacity': 0 } });
-  if (!map.getLayer('hl-line')) map.addLayer({ id: 'hl-line', type: 'line', source: 'brew-hl', filter: LINEY,
-    layout: { 'line-join': 'round', 'line-cap': 'round' },
-    paint: { 'line-color': '#fff6e8', 'line-width': 4, 'line-opacity': 0 } });
-  if (!map.getLayer('hl-point')) map.addLayer({ id: 'hl-point', type: 'circle', source: 'brew-hl', filter: PTS,
-    paint: { 'circle-color': 'rgba(0,0,0,0)', 'circle-radius': 14, 'circle-stroke-color': '#fff6e8', 'circle-stroke-width': 3, 'circle-stroke-opacity': 0 } });
+  if (!map.getSource('lyr'))    map.addSource('lyr', { type: 'geojson', data: state.data || EMPTY });
+  if (!map.getSource('lyr-hl')) map.addSource('lyr-hl', { type: 'geojson', data: EMPTY });
+  if (!map.getLayer('lyr-fill'))  map.addLayer({ id: 'lyr-fill', type: 'fill', source: 'lyr', filter: POLY, paint: { 'fill-color': '#000', 'fill-opacity': .4 } });
+  if (!map.getLayer('lyr-line'))  map.addLayer({ id: 'lyr-line', type: 'line', source: 'lyr', filter: LINEY, layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#000' } });
+  if (!map.getLayer('lyr-point')) map.addLayer({ id: 'lyr-point', type: 'circle', source: 'lyr', filter: PTS, paint: { 'circle-color': '#000', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 1.5 } });
+  if (!map.getLayer('hl-fill'))  map.addLayer({ id: 'hl-fill', type: 'fill', source: 'lyr-hl', filter: POLY, paint: { 'fill-color': '#2a1b14', 'fill-opacity': 0 } });
+  if (!map.getLayer('hl-line'))  map.addLayer({ id: 'hl-line', type: 'line', source: 'lyr-hl', filter: LINEY, layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#2a1b14', 'line-width': 4, 'line-opacity': 0 } });
+  if (!map.getLayer('hl-point')) map.addLayer({ id: 'hl-point', type: 'circle', source: 'lyr-hl', filter: PTS, paint: { 'circle-color': 'rgba(0,0,0,0)', 'circle-radius': 14, 'circle-stroke-color': '#2a1b14', 'circle-stroke-width': 3, 'circle-stroke-opacity': 0 } });
 }
 map.on('style.load', () => { addDataLayers(); applyStyle(); });
 
 function applyStyle() {
   const s = state.style;
-  if (!map.getLayer('brew-fill')) return;
-  map.setPaintProperty('brew-fill', 'fill-color', s.color);
-  map.setPaintProperty('brew-fill', 'fill-opacity', s.opacity * 0.55);
-  map.setPaintProperty('brew-line', 'line-color', s.color);
-  map.setPaintProperty('brew-line', 'line-width', s.width);
-  map.setPaintProperty('brew-line', 'line-opacity', Math.min(1, s.opacity + 0.15));
-  map.setPaintProperty('brew-point', 'circle-color', s.color);
-  map.setPaintProperty('brew-point', 'circle-radius', s.radius);
-  map.setPaintProperty('brew-point', 'circle-opacity', s.opacity);
-  map.setPaintProperty('brew-point', 'circle-stroke-opacity', Math.min(1, s.opacity + 0.2));
+  const outline = state.basemap === 'dark' ? '#1b1310' : '#ffffff';
+  if (map.getLayer('lyr-fill')) {
+    map.setPaintProperty('lyr-fill', 'fill-color', s.color);
+    map.setPaintProperty('lyr-fill', 'fill-opacity', s.opacity * 0.5);
+    map.setPaintProperty('lyr-line', 'line-color', s.color);
+    map.setPaintProperty('lyr-line', 'line-width', s.width);
+    map.setPaintProperty('lyr-line', 'line-opacity', Math.min(1, s.opacity + 0.1));
+    map.setPaintProperty('lyr-point', 'circle-color', s.color);
+    map.setPaintProperty('lyr-point', 'circle-radius', s.radius);
+    map.setPaintProperty('lyr-point', 'circle-opacity', s.opacity);
+    map.setPaintProperty('lyr-point', 'circle-stroke-color', outline);
+    map.setPaintProperty('lyr-point', 'circle-stroke-opacity', Math.min(1, s.opacity + 0.15));
+    const hl = state.basemap === 'dark' ? '#fff6e8' : '#2a1b14';
+    map.setPaintProperty('hl-fill', 'fill-color', hl);
+    map.setPaintProperty('hl-line', 'line-color', hl);
+    map.setPaintProperty('hl-point', 'circle-stroke-color', hl);
+  }
   updateLegend();
 }
 
 function setBasemap(key) {
   if (!BASEMAPS[key] || key === state.basemap) return;
   state.basemap = key;
-  map.setStyle(BASEMAPS[key].style, { diff: false });  // data layers are re-added on 'style.load'
-  $$('.roast-opt').forEach(o => o.classList.toggle('sel', o.dataset.basemap === key));
-  toast(t(`Switched to <b>${BASEMAPS[key].brew}</b>. Your beans stayed in the cup.`, `Basemap: <b>${BASEMAPS[key].plain}</b>`), 'info', 2200);
+  map.setStyle(BASEMAPS[key].style, { diff: false });   // data layers are re-added on style.load
+  $$('.bm').forEach(o => o.classList.toggle('sel', o.dataset.basemap === key));
 }
 
-/* Map interactions */
-const liveHitLayers = () => HIT_LAYERS.filter(l => map.getLayer(l));
+const liveHit = () => HIT.filter(l => map.getLayer(l));
 map.on('mousemove', e => {
-  $('#latVal').textContent = e.lngLat.lat.toFixed(5) + '°';
-  $('#lonVal').textContent = e.lngLat.lng.toFixed(5) + '°';
+  $('#latVal').textContent = e.lngLat.lat.toFixed(5);
+  $('#lonVal').textContent = e.lngLat.lng.toFixed(5);
   if (!state.data) return;
-  const hits = map.queryRenderedFeatures(e.point, { layers: liveHitLayers() });
-  map.getCanvas().style.cursor = hits.length ? 'pointer' : '';
-});
-map.on('zoom', () => { $('#zoomVal').textContent = map.getZoom().toFixed(1); });
-map.on('load', () => {
-  const c = map.getCenter();
-  $('#latVal').textContent = c.lat.toFixed(5) + '°';
-  $('#lonVal').textContent = c.lng.toFixed(5) + '°';
-  $('#zoomVal').textContent = map.getZoom().toFixed(1);
+  map.getCanvas().style.cursor = map.queryRenderedFeatures(e.point, { layers: liveHit() }).length ? 'pointer' : '';
 });
 map.on('click', e => {
   if (!state.data) return;
-  const hits = map.queryRenderedFeatures(e.point, { layers: liveHitLayers() });
+  const hits = map.queryRenderedFeatures(e.point, { layers: liveHit() });
   if (!hits.length) return;
   const f = state.data.features[hits[0].id];
   if (!f) return;
-  openPopup(f, e.lngLat);
-  highlight(f);
-  selectRow(f.id);
+  openPopup(f, e.lngLat); highlight(f); selectRow(f.id);
 });
 
-function measureHTML(f) {
+function measure(f) {
   try {
     const g = f.geometry; if (!g) return '';
-    if (/Polygon/.test(g.type)) {
-      const a = turf.area(f);
-      return a > 1e6 ? `${fmt(a / 1e6, 2)} km² · ${fmt(a / 4046.856, 1)} ac` : `${fmt(a, 0)} m² · ${fmt(a / 4046.856, 2)} ac`;
-    }
+    if (/Polygon/.test(g.type)) { const a = turf.area(f); return a > 1e6 ? `${fmt(a / 1e6, 2)} km² · ${fmt(a / 4046.856, 1)} acres` : `${fmt(a, 0)} m² · ${fmt(a / 4046.856, 2)} acres`; }
     if (/LineString/.test(g.type)) { const km = turf.length(f); return `${fmt(km, 2)} km · ${fmt(km * 0.621371, 2)} mi`; }
-    if (g.type === 'Point') return `${t('Latte', 'Lat')} ${g.coordinates[1].toFixed(5)}, ${t('Long Black', 'Lon')} ${g.coordinates[0].toFixed(5)}`;
+    if (g.type === 'Point') return `${g.coordinates[1].toFixed(5)}, ${g.coordinates[0].toFixed(5)}`;
   } catch (_) {}
   return '';
 }
-function nameKeyOf(props) {
-  const ks = Object.keys(props);
-  return ks.find(k => /^(name|title|label)$/i.test(k)) || ks.find(k => /name/i.test(k));
-}
+function nameKeyOf(p) { const ks = Object.keys(p); return ks.find(k => /^(name|title|label)$/i.test(k)) || ks.find(k => /name/i.test(k)); }
 function openPopup(f, lngLat) {
   const p = f.properties || {}, nk = nameKeyOf(p);
-  const title = nk && p[nk] !== null && p[nk] !== '' ? p[nk] : `${t('Bean', 'Feature')} #${f.id + 1}`;
+  const title = nk && p[nk] !== null && p[nk] !== '' ? p[nk] : `Feature ${f.id + 1}`;
   const keys = Object.keys(p).filter(k => k !== nk);
-  const rows = keys.slice(0, 12).map(k => `<div class="pop-row"><div class="k" title="${esc(k)}">${esc(k)}</div><div class="v">${p[k] === null || p[k] === '' ? '<span style="color:#6f5d50">—</span>' : esc(trunc(p[k], 140))}</div></div>`).join('');
-  const more = keys.length > 12 ? `<div class="text-[11px] text-steam pt-2">+${keys.length - 12} ${t('more notes in the Cupping Room', 'more fields in the table')}</div>` : '';
-  const m = measureHTML(f);
-  const html = `<div class="px-4 pt-3.5 pb-3 min-w-[230px]">
-      <div class="text-[10px] uppercase tracking-[0.16em] text-steam font-bold">${esc(f.geometry ? f.geometry.type : '')} · #${f.id + 1}</div>
-      <div class="font-display text-[17px] font-semibold leading-tight mt-0.5 pr-5">${esc(trunc(title, 80))}</div>
-      ${m ? `<div class="text-[11.5px] text-crema mt-1 font-mono">${m}</div>` : ''}
-      <div class="mt-2.5 max-h-[220px] overflow-y-auto scroll-brew">${rows || `<div class="text-[12px] text-steam">${t('No tasting notes.', 'No attributes.')}</div>`}${more}</div>
+  const rows = keys.slice(0, 12).map(k => `<div class="pop-row"><div class="k" title="${esc(k)}">${esc(k)}</div><div class="v">${p[k] === null || p[k] === '' ? '<span style="color:#a8978a">–</span>' : esc(trunc(p[k], 140))}</div></div>`).join('');
+  const more = keys.length > 12 ? `<div style="font-size:12px;color:#6e5b4e;padding-top:8px">+ ${keys.length - 12} more fields in the table</div>` : '';
+  const m = measure(f);
+  const html = `<div style="padding:18px 20px 14px;min-width:240px">
+      <div style="font-size:16px;font-weight:600;line-height:1.25;padding-right:22px">${esc(trunc(title, 80))}</div>
+      ${m ? `<div style="font-size:12px;color:#8a4f24;margin-top:4px">${m}</div>` : ''}
+      <div class="scroll-soft" style="margin-top:12px;max-height:230px;overflow-y:auto">${rows || '<div style="font-size:13px;color:#6e5b4e">No attributes</div>'}${more}</div>
     </div>`;
   if (state.popup) state.popup.remove();
-  state.popup = new maplibregl.Popup({ maxWidth: '330px', offset: 12 }).setLngLat(lngLat).setHTML(html).addTo(map);
+  state.popup = new maplibregl.Popup({ maxWidth: '340px', offset: 12 }).setLngLat(lngLat).setHTML(html).addTo(map);
 }
 
-/* Highlight pulse */
 function highlight(f) {
-  if (!map.getSource('brew-hl')) return;
-  map.getSource('brew-hl').setData({ type: 'FeatureCollection', features: [f] });
+  if (!map.getSource('lyr-hl')) return;
+  map.getSource('lyr-hl').setData({ type: 'FeatureCollection', features: [f] });
   if (state.hlAnim) cancelAnimationFrame(state.hlAnim);
-  const start = performance.now(), DUR = 2800;
+  const start = performance.now(), DUR = 2600;
   const step = now => {
-    const el = now - start;
-    const fade = el > DUR - 800 ? Math.max(0, (DUR - el) / 800) : 1;
-    const pulse = (Math.sin(el / 140) + 1) / 2;
+    const el = now - start, fade = el > DUR - 700 ? Math.max(0, (DUR - el) / 700) : 1, pulse = (Math.sin(el / 140) + 1) / 2;
     if (map.getLayer('hl-point')) {
-      map.setPaintProperty('hl-point', 'circle-radius', state.style.radius + 7 + pulse * 7);
-      map.setPaintProperty('hl-point', 'circle-stroke-opacity', fade * (0.55 + 0.45 * pulse));
+      map.setPaintProperty('hl-point', 'circle-radius', state.style.radius + 6 + pulse * 7);
+      map.setPaintProperty('hl-point', 'circle-stroke-opacity', fade * (0.5 + 0.5 * pulse));
       map.setPaintProperty('hl-line', 'line-width', 3 + pulse * 4);
-      map.setPaintProperty('hl-line', 'line-opacity', fade * (0.6 + 0.4 * pulse));
-      map.setPaintProperty('hl-fill', 'fill-opacity', fade * 0.25 * pulse);
+      map.setPaintProperty('hl-line', 'line-opacity', fade * (0.55 + 0.45 * pulse));
+      map.setPaintProperty('hl-fill', 'fill-opacity', fade * 0.18 * pulse);
     }
     if (el < DUR) state.hlAnim = requestAnimationFrame(step);
-    else { state.hlAnim = null; map.getSource('brew-hl') && map.getSource('brew-hl').setData(EMPTY); }
+    else { state.hlAnim = null; map.getSource('lyr-hl') && map.getSource('lyr-hl').setData(EMPTY); }
   };
   state.hlAnim = requestAnimationFrame(step);
 }
-
-function zoomToFeature(id) {
+function zoomToFeature(id, then) {
   const f = state.data && state.data.features[id];
   if (!f) return;
-  if (!f.geometry) { toast(t('This bean has no location. It floated away.', 'This row has no geometry.'), 'warn', 2500); return; }
+  if (!f.geometry) { toast('This row has no location.', 'warn', 2500); return; }
   const b = turf.bbox(f);
-  if (f.geometry.type === 'Point' || (b[0] === b[2] && b[1] === b[3])) {
-    map.flyTo({ center: [b[0], b[1]], zoom: Math.max(map.getZoom(), 15), speed: 1.4, curve: 1.5, essential: true });
-  } else {
-    map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: { top: 120, bottom: 80, left: 80, right: 80 }, maxZoom: 17, duration: 1500, essential: true });
-  }
-  map.once('moveend', () => highlight(f));
+  if (f.geometry.type === 'Point' || (b[0] === b[2] && b[1] === b[3])) map.flyTo({ center: [b[0], b[1]], zoom: Math.max(map.getZoom(), 15), speed: 1.4, essential: true });
+  else map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 90, maxZoom: 17, duration: 1400, essential: true });
+  map.once('moveend', () => { highlight(f); then && then(f); });
 }
-
 function fitToData() {
   if (!state.data) return;
   try {
     const b = turf.bbox(state.data);
     if (!b.every(Number.isFinite)) return;
     if (b[0] === b[2] && b[1] === b[3]) map.flyTo({ center: [b[0], b[1]], zoom: 14 });
-    else map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: { top: 130, bottom: 70, left: 70, right: 70 }, maxZoom: 16, duration: 1400 });
+    else map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: { top: 140, bottom: 80, left: 80, right: 80 }, maxZoom: 16, duration: 1300 });
   } catch (_) {}
 }
 
-/* ---------------------------------------------------------------------
-   Parsing — every grind becomes a GeoJSON FeatureCollection
---------------------------------------------------------------------- */
+/* ------------------------------ Parsing ------------------------------ */
 const GEOM_TYPES = ['Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon', 'GeometryCollection'];
-const LAT_KEYS = ['lat', 'latitude', 'latte', 'y', 'lat_dd', 'latitude_dd', 'point_y', 'ycoord', 'y_coord', 'lat_y', 'decimallatitude'];
-const LON_KEYS = ['lon', 'lng', 'long', 'longitude', 'long_black', 'longblack', 'x', 'lon_dd', 'longitude_dd', 'point_x', 'xcoord', 'x_coord', 'long_x', 'decimallongitude'];
+const LAT_KEYS = ['lat', 'latitude', 'y', 'lat_dd', 'latitude_dd', 'point_y', 'ycoord', 'y_coord', 'lat_y', 'decimallatitude'];
+const LON_KEYS = ['lon', 'lng', 'long', 'longitude', 'x', 'lon_dd', 'longitude_dd', 'point_x', 'xcoord', 'x_coord', 'long_x', 'decimallongitude'];
 
 async function parseFile(file) {
   const name = file.name || 'upload';
   const ext = (name.split('.').pop() || '').toLowerCase();
   switch (ext) {
-    case 'zip':     return parseZip(await file.arrayBuffer(), name);
-    case 'kmz':     return { fc: await parseKMZ(await file.arrayBuffer()), format: 'kmz' };
-    case 'kml':     return { fc: kmlToGeoJSON(await file.text()), format: 'kml' };
-    case 'geojson':
-    case 'json':    return parseJSONText(await file.text(), ext);
-    case 'csv': case 'tsv': case 'txt':
-                    return { fc: csvToGeoJSON(await file.text()), format: 'csv' };
-    case 'gpkg':    return { fc: await gpkgToGeoJSON(await file.arrayBuffer()), format: 'gpkg' };
+    case 'zip':  return parseZip(await file.arrayBuffer());
+    case 'kmz':  return { fc: await parseKMZ(await file.arrayBuffer()), format: 'kmz' };
+    case 'kml':  return { fc: kmlToGeoJSON(await file.text()), format: 'kml' };
+    case 'geojson': case 'json': return parseJSONText(await file.text(), ext);
+    case 'csv': case 'tsv': case 'txt': return { fc: csvToGeoJSON(await file.text()), format: 'csv' };
+    case 'gpkg': return { fc: await gpkgToGeoJSON(await file.arrayBuffer()), format: 'gpkg' };
     case 'gdb': case 'gdbtable': case 'gdbtablx': case 'gdbindexes':
-      throw new FormatError('File Geodatabase (.gdb)', t('Kopi Luwak is rare for a reason: Esri’s proprietary FileGDB binary can’t be brewed in a browser. Export it from ArcGIS Pro/QGIS as a zipped shapefile, GeoPackage, or GeoJSON.', 'Proprietary Esri FileGDB binaries cannot be read in the browser. Export to GeoPackage, Shapefile or GeoJSON first.'));
+      throw new FormatError('File Geodatabase (.gdb)', 'Esri File Geodatabases can’t be read in a web browser. In ArcGIS Pro or QGIS, export the layer as a zipped Shapefile, GeoPackage or GeoJSON.');
     case 'shp': case 'dbf': case 'shx': case 'prj':
-      throw new FormatError('Shapefile component (.' + ext + ')', t('Shapefiles travel as a set: zip the .shp, .shx, .dbf and .prj together and drop the .zip.', 'Zip the .shp, .shx, .dbf and .prj files together and upload the .zip.'));
+      throw new FormatError('Shapefile (.' + ext + ')', 'A shapefile is several files. Zip the .shp, .shx, .dbf and .prj together and upload the .zip.');
     default:
-      throw new FormatError((ext ? '.' + ext : 'Unknown') + ' file', t('That bean isn’t on our menu.', 'Unsupported file type.'));
+      throw new FormatError(ext ? '.' + ext : 'This file', 'This file type isn’t supported.');
   }
 }
 
-async function parseZip(buf, name) {
+async function ensureShp() {
+  if (typeof window.shp === 'function') return window.shp;
+  for (const u of SHP_URLS) { try { await loadScript(u); if (typeof window.shp === 'function') return window.shp; } catch (_) {} }
+  throw new FormatError('Zipped Shapefile', 'The shapefile reader could not be downloaded. Check your connection and try again.');
+}
+
+async function parseZip(buf) {
   let zip;
-  try { zip = await JSZip.loadAsync(buf); } catch (e) { throw new FormatError('ZIP archive', 'The archive appears to be corrupt or encrypted.'); }
+  try { zip = await JSZip.loadAsync(buf); } catch (e) { throw new FormatError('ZIP', 'The archive appears to be damaged or password-protected.'); }
   const names = Object.keys(zip.files).filter(n => !zip.files[n].dir && !/(^|\/)__MACOSX\//.test(n));
   if (names.some(n => /\.gdb(\/|$)/i.test(n) || /\.gdbtable$/i.test(n)))
-    throw new FormatError('File Geodatabase (.gdb)', t('A zipped Kopi Luwak! Esri FileGDB binaries can’t be brewed client-side. Export as GeoPackage, Shapefile or GeoJSON.', 'Zipped FileGDB detected. Export to GeoPackage, Shapefile or GeoJSON first.'));
+    throw new FormatError('File Geodatabase (.gdb)', 'This zip contains an Esri File Geodatabase, which can’t be read in a web browser. Export the layer as a zipped Shapefile, GeoPackage or GeoJSON.');
   if (names.some(n => /\.shp$/i.test(n))) {
-    if (typeof shp !== 'function') throw new FormatError('Zipped Shapefile', 'The shpjs library failed to load (network/CDN).');
+    const shp = await ensureShp();
     let out;
     try { out = await shp(buf); } catch (e) { throw new FormatError('Zipped Shapefile', e.message); }
     const list = Array.isArray(out) ? out : [out];
@@ -847,26 +720,24 @@ async function parseZip(buf, name) {
   }
   const pick = re => names.find(n => re.test(n));
   let n;
-  if ((n = pick(/\.kml$/i)))            return { fc: kmlToGeoJSON(await zip.file(n).async('string')), format: 'kml' };
-  if ((n = pick(/\.(geo)?json$/i)))     return parseJSONText(await zip.file(n).async('string'), 'geojson');
-  if ((n = pick(/\.gpkg$/i)))           return { fc: await gpkgToGeoJSON(await zip.file(n).async('arraybuffer')), format: 'gpkg' };
-  if ((n = pick(/\.(csv|tsv)$/i)))      return { fc: csvToGeoJSON(await zip.file(n).async('string')), format: 'csv' };
-  throw new FormatError('ZIP archive', t('We opened the bag but found no beans (.shp, .kml, .geojson, .gpkg, or .csv) inside.', 'No supported spatial files were found inside the archive.'));
+  if ((n = pick(/\.kml$/i)))        return { fc: kmlToGeoJSON(await zip.file(n).async('string')), format: 'kml' };
+  if ((n = pick(/\.(geo)?json$/i))) return parseJSONText(await zip.file(n).async('string'), 'geojson');
+  if ((n = pick(/\.gpkg$/i)))       return { fc: await gpkgToGeoJSON(await zip.file(n).async('arraybuffer')), format: 'gpkg' };
+  if ((n = pick(/\.(csv|tsv)$/i)))  return { fc: csvToGeoJSON(await zip.file(n).async('string')), format: 'csv' };
+  throw new FormatError('ZIP', 'No .shp, .kml, .geojson, .gpkg or .csv file was found inside the zip.');
 }
 
 async function parseKMZ(buf) {
   let zip;
-  try { zip = await JSZip.loadAsync(buf); } catch (e) { throw new FormatError('KMZ', 'The KMZ archive could not be unzipped.'); }
+  try { zip = await JSZip.loadAsync(buf); } catch (e) { throw new FormatError('KMZ', 'The KMZ could not be unzipped.'); }
   const kmls = Object.keys(zip.files).filter(n => /\.kml$/i.test(n));
   if (!kmls.length) throw new FormatError('KMZ', 'No .kml document was found inside the KMZ.');
-  const main = kmls.find(n => /(^|\/)doc\.kml$/i.test(n)) || kmls[0];
-  return kmlToGeoJSON(await zip.file(main).async('string'));
+  return kmlToGeoJSON(await zip.file(kmls.find(n => /(^|\/)doc\.kml$/i.test(n)) || kmls[0]).async('string'));
 }
 
-/* KML via DOMParser */
 function kmlToGeoJSON(text) {
   const doc = new DOMParser().parseFromString(text, 'text/xml');
-  if (doc.getElementsByTagName('parsererror').length) throw new FormatError('KML', 'The XML is malformed.');
+  if (doc.getElementsByTagName('parsererror').length) throw new FormatError('KML', 'The file isn’t valid XML.');
   const all = (node, name) => [...node.getElementsByTagNameNS('*', name)];
   const kids = (node, name) => [...node.children].filter(n => n.localName === name);
   const coords = str => (str || '').trim().split(/\s+/).map(tk => tk.split(',').map(Number))
@@ -875,12 +746,10 @@ function kmlToGeoJSON(text) {
   const closeRing = r => { if (r.length > 2) { const a = r[0], b = r[r.length - 1]; if (a[0] !== b[0] || a[1] !== b[1]) r.push(a.slice()); } return r; };
   const coordText = node => { const c = all(node, 'coordinates')[0]; return c ? c.textContent : ''; };
   const GEOMS = ['Point', 'LineString', 'LinearRing', 'Polygon', 'MultiGeometry', 'Track', 'MultiTrack'];
-
   function parseGeom(node) {
     switch (node.localName) {
       case 'Point': { const c = coords(coordText(node)); return c.length ? [{ type: 'Point', coordinates: c[0] }] : []; }
-      case 'LineString':
-      case 'LinearRing': { const c = coords(coordText(node)); return c.length > 1 ? [{ type: 'LineString', coordinates: c }] : []; }
+      case 'LineString': case 'LinearRing': { const c = coords(coordText(node)); return c.length > 1 ? [{ type: 'LineString', coordinates: c }] : []; }
       case 'Polygon': {
         const outer = all(node, 'outerBoundaryIs')[0]; if (!outer) return [];
         const rings = [closeRing(coords(coordText(outer)))];
@@ -896,38 +765,33 @@ function kmlToGeoJSON(text) {
       default: return [];
     }
   }
-  function combine(geoms) {
-    if (!geoms.length) return null;
-    if (geoms.length === 1) return geoms[0];
-    const types = [...new Set(geoms.map(g => g.type))];
-    if (types.length === 1 && ['Point', 'LineString', 'Polygon'].includes(types[0]))
-      return { type: 'Multi' + types[0], coordinates: geoms.map(g => g.coordinates) };
-    return { type: 'GeometryCollection', geometries: geoms };
+  function combine(g) {
+    if (!g.length) return null;
+    if (g.length === 1) return g[0];
+    const types = [...new Set(g.map(x => x.type))];
+    if (types.length === 1 && ['Point', 'LineString', 'Polygon'].includes(types[0])) return { type: 'Multi' + types[0], coordinates: g.map(x => x.coordinates) };
+    return { type: 'GeometryCollection', geometries: g };
   }
-
   const features = all(doc, 'Placemark').map(pm => {
     const props = {};
     const nm = kids(pm, 'name')[0]; if (nm) props.name = nm.textContent.trim();
     const ds = kids(pm, 'description')[0]; if (ds) props.description = ds.textContent.trim();
     all(pm, 'Data').forEach(d => { const v = kids(d, 'value')[0]; props[d.getAttribute('name') || 'data'] = v ? v.textContent.trim() : ''; });
     all(pm, 'SimpleData').forEach(d => { props[d.getAttribute('name') || 'data'] = d.textContent.trim(); });
-    const geoms = [...pm.children].filter(c => GEOMS.includes(c.localName)).flatMap(parseGeom);
-    return { type: 'Feature', geometry: combine(geoms), properties: props };
+    return { type: 'Feature', geometry: combine([...pm.children].filter(c => GEOMS.includes(c.localName)).flatMap(parseGeom)), properties: props };
   });
-  if (!features.length) throw new FormatError('KML', t('No Placemarks found. This French Press was empty.', 'No Placemarks were found in the document.'));
+  if (!features.length) throw new FormatError('KML', 'No placemarks were found in the file.');
   return { type: 'FeatureCollection', features };
 }
 
-/* JSON / GeoJSON / Esri JSON */
 function parseJSONText(text, ext) {
   let obj;
-  try { obj = JSON.parse(text); } catch (e) { throw new FormatError(ext === 'geojson' ? 'GeoJSON' : 'JSON', 'Invalid JSON: ' + e.message); }
-  if (obj && Array.isArray(obj.features) && obj.features.length && obj.features[0].attributes !== undefined)
-    return { fc: esriToGeoJSON(obj), format: 'esri' };
+  try { obj = JSON.parse(text); } catch (e) { throw new FormatError(ext === 'geojson' ? 'GeoJSON' : 'JSON', 'The file isn’t valid JSON (' + e.message + ').'); }
+  if (obj && Array.isArray(obj.features) && obj.features.length && obj.features[0].attributes !== undefined) return { fc: esriToGeoJSON(obj), format: 'esri' };
   return { fc: jsonToGeoJSON(obj), format: ext === 'geojson' ? 'geojson' : 'json' };
 }
 function jsonToGeoJSON(obj) {
-  if (!obj || typeof obj !== 'object') throw new FormatError('JSON', 'Empty or non-object JSON.');
+  if (!obj || typeof obj !== 'object') throw new FormatError('JSON', 'The file is empty.');
   if (obj.type === 'FeatureCollection' && Array.isArray(obj.features)) return obj;
   if (obj.type === 'Feature') return { type: 'FeatureCollection', features: [obj] };
   if (GEOM_TYPES.includes(obj.type)) return { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: obj, properties: {} }] };
@@ -935,12 +799,11 @@ function jsonToGeoJSON(obj) {
     if (obj.length && obj.every(o => o && o.type === 'Feature')) return { type: 'FeatureCollection', features: obj };
     if (obj.length && typeof obj[0] === 'object') return rowsToFC(obj, 'JSON');
   }
-  throw new FormatError('JSON', t('No FeatureCollection, Feature, geometry or Latte/Long Black rows found.', 'No GeoJSON structure or lat/lon rows were found.'));
+  throw new FormatError('JSON', 'No GeoJSON features or latitude/longitude rows were found.');
 }
 function esriToGeoJSON(obj) {
-  const sr = obj.spatialReference || {};
-  const wkid = sr.latestWkid || sr.wkid;
-  const ringArea = r => { let s = 0; for (let i = 0; i < r.length - 1; i++) s += (r[i + 1][0] - r[i][0]) * (r[i + 1][1] + r[i][1]); return s; }; // >0 = clockwise
+  const sr = obj.spatialReference || {}, wkid = sr.latestWkid || sr.wkid;
+  const ringArea = r => { let s = 0; for (let i = 0; i < r.length - 1; i++) s += (r[i + 1][0] - r[i][0]) * (r[i + 1][1] + r[i][1]); return s; };
   const features = obj.features.map(f => {
     const g = f.geometry; let geom = null;
     if (g) {
@@ -959,8 +822,6 @@ function esriToGeoJSON(obj) {
   if ([102100, 102113, 3857, 900913].includes(wkid)) fc.crs = { properties: { name: 'EPSG:3857' } };
   return fc;
 }
-
-/* CSV via PapaParse */
 function csvToGeoJSON(text) {
   const res = Papa.parse(text, {
     header: true, skipEmptyLines: 'greedy',
@@ -973,9 +834,9 @@ function csvToGeoJSON(text) {
 function rowsToFC(rows, fmtName) {
   const keys = Object.keys(rows[0] || {});
   const norm = k => k.toLowerCase().trim().replace(/[\s-]+/g, '_');
-  const find = list => { for (const cand of list) { const k = keys.find(k => norm(k) === cand); if (k) return k; } return null; };
+  const find = list => { for (const c of list) { const k = keys.find(k => norm(k) === c); if (k) return k; } return null; };
   const latK = find(LAT_KEYS), lonK = find(LON_KEYS);
-  if (!latK || !lonK) throw new FormatError(fmtName, t('No Latte/Long Black columns found. Add lat/lon (or X/Y) headers and pour again.', 'No latitude/longitude (or X/Y) columns were found.'));
+  if (!latK || !lonK) throw new FormatError(fmtName, 'No latitude/longitude (or X/Y) columns were found. Name them "lat" and "lon" and try again.');
   const features = []; let skipped = 0;
   rows.forEach(r => {
     const y = parseFloat(r[latK]), x = parseFloat(r[lonK]);
@@ -983,11 +844,11 @@ function rowsToFC(rows, fmtName) {
     features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [x, y] }, properties: { ...r } });
   });
   if (!features.length) throw new FormatError(fmtName, 'No rows had valid numeric coordinates.');
-  if (skipped) setTimeout(() => toast(t(`${fmt(skipped)} beans had no Latte/Long Black and were left in the filter.`, `${fmt(skipped)} rows skipped (missing coordinates).`), 'warn'), 400);
+  if (skipped) setTimeout(() => toast(`${fmt(skipped)} rows skipped because they had no coordinates.`, 'warn'), 400);
   return { type: 'FeatureCollection', features };
 }
 
-/* GeoPackage via sql.js (lazy-loaded WASM) + WKB decoder + proj4 */
+/* GeoPackage: sql.js (lazy) + WKB reader + proj4 */
 async function loadSqlJs() {
   if (window.__SQL) return window.__SQL;
   if (typeof initSqlJs !== 'function') await loadScript(SQLJS_BASE + 'sql-wasm.js');
@@ -1003,37 +864,30 @@ function parseWKB(u8, offset) {
     let hasZ = false, hasM = false;
     if (type & 0x80000000) hasZ = true;
     if (type & 0x40000000) hasM = true;
-    if (type & 0x20000000) o += 4;             // EWKB SRID
+    if (type & 0x20000000) o += 4;
     type &= 0x0FFFFFFF;
-    if (type >= 3000) { hasZ = hasM = true; type -= 3000; }
-    else if (type >= 2000) { hasM = true; type -= 2000; }
-    else if (type >= 1000) { hasZ = true; type -= 1000; }
+    if (type >= 3000) { hasZ = hasM = true; type -= 3000; } else if (type >= 2000) { hasM = true; type -= 2000; } else if (type >= 1000) { hasZ = true; type -= 1000; }
     const dims = 2 + (hasZ ? 1 : 0) + (hasM ? 1 : 0);
-    const pt = () => { const x = dv.getFloat64(o, le), y = dv.getFloat64(o + 8, le); const z = hasZ ? dv.getFloat64(o + 16, le) : null; o += 8 * dims; return hasZ ? [x, y, z] : [x, y]; };
+    const pt = () => { const x = dv.getFloat64(o, le), y = dv.getFloat64(o + 8, le), z = hasZ ? dv.getFloat64(o + 16, le) : null; o += 8 * dims; return hasZ ? [x, y, z] : [x, y]; };
     const n = () => { const v = dv.getUint32(o, le); o += 4; return v; };
     const pts = () => { const c = n(), a = new Array(c); for (let i = 0; i < c; i++) a[i] = pt(); return a; };
     switch (type) {
       case 1: { const p = pt(); return Number.isNaN(p[0]) ? null : { type: 'Point', coordinates: p }; }
       case 2: return { type: 'LineString', coordinates: pts() };
       case 3: { const r = n(), rings = []; for (let i = 0; i < r; i++) rings.push(pts()); return { type: 'Polygon', coordinates: rings }; }
-      case 4: case 5: case 6: {
-        const c = n(), parts = [];
-        for (let i = 0; i < c; i++) { const g = read(); if (g) parts.push(g.coordinates); }
-        return { type: ['MultiPoint', 'MultiLineString', 'MultiPolygon'][type - 4], coordinates: parts };
-      }
+      case 4: case 5: case 6: { const c = n(), parts = []; for (let i = 0; i < c; i++) { const g = read(); if (g) parts.push(g.coordinates); } return { type: ['MultiPoint', 'MultiLineString', 'MultiPolygon'][type - 4], coordinates: parts }; }
       case 7: { const c = n(), geoms = []; for (let i = 0; i < c; i++) { const g = read(); if (g) geoms.push(g); } return { type: 'GeometryCollection', geometries: geoms }; }
-      default: throw new Error('Unsupported WKB geometry type ' + type);
+      default: throw new Error('Unsupported WKB type ' + type);
     }
   }
   return read();
 }
 function parseGpkgGeom(u8) {
   if (!(u8 instanceof Uint8Array) || u8.length < 5) return null;
-  if (u8[0] !== 0x47 || u8[1] !== 0x50) return parseWKB(u8, 0);   // plain WKB fallback
+  if (u8[0] !== 0x47 || u8[1] !== 0x50) return parseWKB(u8, 0);
   const flags = u8[3];
-  if ((flags >> 4) & 1) return null;                              // empty geometry
-  const envSize = [0, 32, 48, 48, 64][(flags >> 1) & 7] || 0;
-  return parseWKB(u8, 8 + envSize);
+  if ((flags >> 4) & 1) return null;
+  return parseWKB(u8, 8 + ([0, 32, 48, 48, 64][(flags >> 1) & 7] || 0));
 }
 function mapCoords(geom, fn) {
   if (!geom) return geom;
@@ -1052,20 +906,20 @@ function gpkgProjector(srs) {
   let def = null;
   if (org === 'EPSG' && proj4.defs('EPSG:' + code)) def = 'EPSG:' + code;
   else if (srs.definition && srs.definition !== 'undefined') { try { proj4(srs.definition); def = srs.definition; } catch (_) {} }
-  if (!def) { toast(t(`Unknown roast (SRS ${esc(code)}). Serving coordinates as-is.`, `Unknown SRS ${esc(code)}; coordinates not reprojected.`), 'warn'); return null; }
+  if (!def) { toast(`Unknown coordinate system (${esc(code)}); coordinates shown as-is.`, 'warn'); return null; }
   return projectorFrom(def);
 }
 async function gpkgToGeoJSON(buf) {
   let SQL;
-  try { SQL = await loadSqlJs(); } catch (e) { throw new FormatError('GeoPackage (.gpkg)', 'The SQLite engine (sql.js) could not be loaded.'); }
+  try { SQL = await loadSqlJs(); } catch (e) { throw new FormatError('GeoPackage (.gpkg)', 'The GeoPackage reader could not be downloaded. Check your connection and try again.'); }
   let db;
-  try { db = new SQL.Database(new Uint8Array(buf)); } catch (e) { throw new FormatError('GeoPackage (.gpkg)', 'Not a valid SQLite database.'); }
+  try { db = new SQL.Database(new Uint8Array(buf)); } catch (e) { throw new FormatError('GeoPackage (.gpkg)', 'This isn’t a valid GeoPackage/SQLite file.'); }
   try {
     const q = sql => { const r = db.exec(sql); if (!r.length) return []; const { columns, values } = r[0]; return values.map(v => Object.fromEntries(columns.map((c, i) => [c, v[i]]))); };
     let layers;
     try { layers = q('SELECT table_name, column_name, srs_id FROM gpkg_geometry_columns'); }
-    catch (e) { throw new FormatError('GeoPackage (.gpkg)', 'No gpkg_geometry_columns table; this may be a tiles-only or non-standard package.'); }
-    if (!layers.length) throw new FormatError('GeoPackage (.gpkg)', 'No vector feature tables found (raster/tile GeoPackages aren’t supported).');
+    catch (e) { throw new FormatError('GeoPackage (.gpkg)', 'No vector layers were found. Tile-only GeoPackages aren’t supported.'); }
+    if (!layers.length) throw new FormatError('GeoPackage (.gpkg)', 'No vector layers were found. Tile-only GeoPackages aren’t supported.');
     let srsRows = [];
     try { srsRows = q('SELECT srs_id, organization, organization_coordsys_id, definition FROM gpkg_spatial_ref_sys'); } catch (_) {}
     const features = [];
@@ -1077,9 +931,9 @@ async function gpkgToGeoJSON(buf) {
           const row = stmt.getAsObject();
           const blob = row[L.column_name]; delete row[L.column_name];
           let geom = null;
-          try { geom = blob ? parseGpkgGeom(blob) : null; } catch (_) { geom = null; }
+          try { geom = blob ? parseGpkgGeom(blob) : null; } catch (_) {}
           if (geom && proj) geom = mapCoords(geom, proj);
-          for (const k in row) if (row[k] instanceof Uint8Array) row[k] = `<blob ${row[k].length} bytes>`;
+          for (const k in row) if (row[k] instanceof Uint8Array) row[k] = `<binary ${row[k].length} bytes>`;
           if (layers.length > 1) row.gpkg_layer = L.table_name;
           features.push({ type: 'Feature', geometry: geom, properties: row });
         }
@@ -1089,7 +943,6 @@ async function gpkgToGeoJSON(buf) {
   } finally { db.close(); }
 }
 
-/* Normalize: ids, flat props, CRS sanity */
 function coordBBox(fc) {
   const b = [Infinity, Infinity, -Infinity, -Infinity];
   const walk = c => { if (typeof c[0] === 'number') { if (c[0] < b[0]) b[0] = c[0]; if (c[1] < b[1]) b[1] = c[1]; if (c[0] > b[2]) b[2] = c[0]; if (c[1] > b[3]) b[3] = c[1]; } else c.forEach(walk); };
@@ -1098,88 +951,81 @@ function coordBBox(fc) {
   return b;
 }
 function normalize(fc, format) {
-  if (!fc || !Array.isArray(fc.features)) throw new FormatError(format, 'No features were produced.');
+  if (!fc || !Array.isArray(fc.features)) throw new FormatError(format, 'No features were found.');
   const features = fc.features.filter(f => f && typeof f === 'object').map((f, i) => {
     const props = {};
-    Object.entries(f.properties || {}).forEach(([k, v]) => {
-      props[k] = v !== null && typeof v === 'object' ? JSON.stringify(v) : (v === undefined ? null : v);
-    });
+    Object.entries(f.properties || {}).forEach(([k, v]) => { props[k] = v !== null && typeof v === 'object' ? JSON.stringify(v) : (v === undefined ? null : v); });
     const geom = f.geometry && (f.geometry.coordinates || f.geometry.geometries) ? f.geometry : null;
     return { type: 'Feature', id: i, geometry: geom, properties: props };
   });
-  if (!features.length) throw new FormatError(format, 'The file contained zero features.');
-  let out = { type: 'FeatureCollection', features };
+  if (!features.length) throw new FormatError(format, 'The file contains no features.');
+  const out = { type: 'FeatureCollection', features };
   const crsName = String((fc.crs && fc.crs.properties && fc.crs.properties.name) || '');
   const b = coordBBox(out);
   const outOfRange = b[0] < -180.0001 || b[2] > 180.0001 || b[1] < -90.0001 || b[3] > 90.0001;
-  const webMerc = Math.max(Math.abs(b[0]), Math.abs(b[2]), Math.abs(b[1]), Math.abs(b[3])) <= 20037509;
-  if (/3857|900913|102100|102113/.test(crsName) || (outOfRange && webMerc && b.every(Number.isFinite))) {
+  const mercLike = Math.max(Math.abs(b[0]), Math.abs(b[2]), Math.abs(b[1]), Math.abs(b[3])) <= 20037509;
+  if (/3857|900913|102100|102113/.test(crsName) || (outOfRange && mercLike && b.every(Number.isFinite))) {
     const p = projectorFrom('EPSG:3857');
     out.features.forEach(f => { f.geometry = mapCoords(f.geometry, p); });
-    setTimeout(() => toast(t('Detected a Web Mercator roast; re-ground to WGS84 lat/lon.', 'Reprojected from Web Mercator (EPSG:3857) to WGS84.'), 'info'), 300);
+    setTimeout(() => toast('Converted from Web Mercator to latitude/longitude.', 'info'), 300);
   } else if (outOfRange) {
-    throw new FormatError(format, t('Coordinates aren’t in Latte/Long Black (WGS84). Likely a projected CRS with no .prj. Reproject to EPSG:4326.', 'Coordinates are not WGS84 longitude/latitude (projected CRS without definition). Reproject to EPSG:4326.'));
+    throw new FormatError(format, 'The coordinates aren’t latitude/longitude, probably a projected coordinate system with no .prj file. Reproject to WGS84 (EPSG:4326) and try again.');
   }
   return out;
 }
 
-/* ---------------------------------------------------------------------
-   Load / clear data
---------------------------------------------------------------------- */
-async function handleFiles(fileList) {
-  const files = [...(fileList || [])];
+/* ---------------------------- Load / clear ---------------------------- */
+async function handleFiles(list) {
+  const files = [...(list || [])];
   if (!files.length) return;
-  if (files.length > 1) toast(t('One cup at a time; brewing the first file.', 'Multiple files dropped; loading the first.'), 'warn', 2500);
+  if (files.length > 1) toast('Loading the first file only.', 'warn', 2500);
   const file = files[0];
   clearError();
-  busy(true, t(`Grinding ${trunc(file.name, 32)}…`, `Parsing ${trunc(file.name, 32)}…`));
-  await new Promise(r => setTimeout(r, 30)); // let the UI paint
+  busy(true, `Brewing ${trunc(file.name, 34)}…`);
+  await new Promise(r => setTimeout(r, 30));
   try {
     const { fc, format } = await parseFile(file);
-    loadData(normalize(fc, GRINDS[format] ? GRINDS[format][1] : format), file.name, format);
+    loadData(normalize(fc, FORMAT_NAMES[format] || format), file.name, format);
   } catch (err) {
     console.error(err);
     const ext = (file.name.split('.').pop() || '').toUpperCase();
-    showFormatError(err instanceof FormatError ? err.format : (ext || 'Unknown'), err instanceof FormatError ? err.detail : err.message);
-  } finally {
-    busy(false);
-    $('#fileInput').value = '';
-  }
+    showFormatError(err instanceof FormatError ? err.format : (ext || 'This file'), err instanceof FormatError ? err.detail : err.message);
+  } finally { busy(false); $('#fileInput').value = ''; }
 }
 
 function loadData(fc, name, format) {
-  state.data = fc; state.name = name; state.format = format; state.edits = 0;
-  state.tableDirty = true; state.chartDirty = true;
+  Object.assign(state, { data: fc, name, format, edits: 0, tableDirty: true, chartDirty: true });
   if (state.popup) state.popup.remove();
-  if (map.getSource('brew')) map.getSource('brew').setData(fc);
+  if (map.getSource('lyr')) map.getSource('lyr').setData(fc);
   fitToData();
-  $('#mapHint').classList.add('hidden');
-  $('#exportBtn').disabled = false;
-  $('#tasteEmpty').classList.add('hidden');
-  $('#tasteBody').classList.remove('hidden');
-  populateFieldSelect();
-  renderBrewCard();
-  updateLegend();
-  updateExportState();
-  if (state.tab === 'taste') { buildTable(); renderChart(); }
-  toast(t(`Order up! <b>${fmt(fc.features.length)}</b> beans brewed from <b>${esc(trunc(name, 30))}</b>.`,
-          `Loaded <b>${fmt(fc.features.length)}</b> features from <b>${esc(trunc(name, 30))}</b>.`), 'ok');
+  $('#welcome').classList.add('hidden');
+  $('#dropzone').classList.add('compact');
+  $('#sampleRow').classList.add('hidden');
+  $$('.exp').forEach(b => b.disabled = false);
+  $('#tableEmpty').classList.add('hidden');
+  $('#tableBody').classList.remove('hidden');
+  if (!$('#titleInput').dataset.touched) { $('#titleInput').value = prettyName(name); updateTitle(); }
+  populateFieldSelect(); renderLayerCard(); updateLegend();
+  if (state.tab === 'table') { buildTable(); renderChart(); }
+  toast(`Order up! <b>${fmt(fc.features.length)}</b> features loaded.`, 'ok');
 }
+const prettyName = n => String(n).replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
 function clearData() {
-  state.data = null; state.name = ''; state.format = '';
-  if (map.getSource('brew')) map.getSource('brew').setData(EMPTY);
+  Object.assign(state, { data: null, name: '', format: '' });
+  if (map.getSource('lyr')) map.getSource('lyr').setData(EMPTY);
   if (state.popup) state.popup.remove();
   if (state.table) { state.table.destroy(); state.table = null; }
   if (state.chart) { state.chart.destroy(); state.chart = null; }
-  $('#brewCard').classList.add('hidden');
+  $('#layerCard').classList.add('hidden');
   $('#legend').classList.add('hidden');
-  $('#mapHint').classList.remove('hidden');
-  $('#exportBtn').disabled = true;
-  $('#tasteEmpty').classList.remove('hidden');
-  $('#tasteBody').classList.add('hidden');
-  updateExportState();
-  toast(t('Grounds dumped. Fresh filter, ready to brew.', 'Data cleared.'), 'info', 2200);
+  $('#welcome').classList.remove('hidden');
+  $('#dropzone').classList.remove('compact');
+  $('#sampleRow').classList.remove('hidden');
+  $$('.exp').forEach(b => b.disabled = true);
+  $('#tableEmpty').classList.remove('hidden');
+  $('#tableBody').classList.add('hidden');
+  if (!$('#titleInput').dataset.touched) { $('#titleInput').value = ''; $('#subtitleInput').value = ''; updateTitle(); }
 }
 
 function geomSummary() {
@@ -1188,74 +1034,59 @@ function geomSummary() {
     if (!f.geometry) { nulls++; return; }
     const ty = f.geometry.type.replace('Multi', '');
     counts[ty] = (counts[ty] || 0) + 1;
-    try {
-      if (ty === 'Polygon') area += turf.area(f);
-      else if (ty === 'LineString') length += turf.length(f);
-    } catch (_) {}
+    try { if (ty === 'Polygon') area += turf.area(f); else if (ty === 'LineString') length += turf.length(f); } catch (_) {}
   });
   return { counts, area, length, nulls };
 }
-function dominantGeom() {
-  const { counts } = geomSummary();
-  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Point';
-}
+const dominantGeom = () => Object.entries(geomSummary().counts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Point';
 
-function renderBrewCard() {
+function renderLayerCard() {
   if (!state.data) return;
   const s = geomSummary(), fields = getFields();
-  const b = (() => { try { return turf.bbox(state.data); } catch (_) { return null; } })();
-  const geomLabel = { Point: t('Beans (points)', 'Points'), LineString: t('Drips (lines)', 'Lines'), Polygon: t('Puddles (polygons)', 'Polygons') };
-  const chips = Object.entries(s.counts).map(([k, v]) => `<span class="inline-flex items-center gap-1.5 rounded-full bg-bean/70 border border-cocoa px-2.5 py-1 text-[11px]"><span class="w-1.5 h-1.5 rounded-full bg-crema"></span>${geomLabel[k] || k} <b class="text-foam">${fmt(v)}</b></span>`).join('');
-  $('#brewCard').innerHTML = `
-    <div class="flex items-start justify-between gap-3">
-      <div class="min-w-0">
-        <div class="eyebrow">${t('Now brewing', 'Active layer')}</div>
-        <div class="font-display text-[18px] font-semibold truncate mt-0.5" title="${esc(state.name)}">${esc(state.name)}</div>
-        <div class="text-[12px] text-crema mt-0.5">${esc(grindLabel(state.format))}</div>
+  const names = { Point: ['point', 'points'], LineString: ['line', 'lines'], Polygon: ['polygon', 'polygons'], GeometryCollection: ['mixed', 'mixed'] };
+  const types = Object.entries(s.counts).map(([k, v]) => `${fmt(v)} ${names[k] ? names[k][v === 1 ? 0 : 1] : k}`).join(' · ') + (s.nulls ? ` · ${fmt(s.nulls)} without location` : '');
+  const size = s.area ? `${fmt(s.area / 1e6, s.area < 1e7 ? 2 : 0)} km² total area` : s.length ? `${fmt(s.length, 1)} km total length` : '';
+  $('#layerCard').innerHTML = `
+    <div class="rounded-3xl border border-line p-6">
+      <div class="flex items-start gap-4">
+        <div class="w-11 h-11 rounded-full bg-[#e7f1e5] grid place-items-center shrink-0">
+          <svg viewBox="0 0 24 24" class="w-5 h-5 text-matcha" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+        </div>
+        <div class="min-w-0">
+          <div class="text-[15px] font-semibold truncate" title="${esc(state.name)}">${esc(state.name)}</div>
+          <div class="hint">${esc(FORMAT_NAMES[state.format] || state.format)} · ${fmt(state.data.features.length)} features · ${fmt(fields.length)} fields</div>
+        </div>
       </div>
-      <div class="shrink-0 w-10 h-10 rounded-xl bg-matcha/15 grid place-items-center text-lg ring-1 ring-matcha/30">✓</div>
-    </div>
-    <div class="grid grid-cols-3 gap-2 mt-3">
-      <div class="tile"><div class="v">${fmt(state.data.features.length)}</div><div class="k">${t('Beans', 'Features')}</div></div>
-      <div class="tile"><div class="v">${fmt(fields.length)}</div><div class="k">${t('Notes', 'Fields')}</div></div>
-      <div class="tile"><div class="v">${s.area ? fmt(s.area / 1e6, s.area < 1e7 ? 2 : 0) : s.length ? fmt(s.length, 1) : '—'}</div><div class="k">${s.area ? 'km²' : s.length ? 'km' : t('Size', 'Extent')}</div></div>
-    </div>
-    <div class="flex flex-wrap gap-1.5 mt-3">${chips}${s.nulls ? `<span class="inline-flex items-center rounded-full bg-bean/70 border border-cocoa px-2.5 py-1 text-[11px] text-steam">${t('No-location beans', 'No geometry')} ${fmt(s.nulls)}</span>` : ''}</div>
-    ${b && b.every(Number.isFinite) ? `<div class="font-mono text-[10.5px] text-steam mt-3 leading-relaxed">${t('Latte', 'Lat')} ${b[1].toFixed(4)} → ${b[3].toFixed(4)}<br>${t('Long Black', 'Lon')} ${b[0].toFixed(4)} → ${b[2].toFixed(4)}</div>` : ''}
-    <div class="grid grid-cols-2 gap-2 mt-3">
-      <button class="btn-ghost" data-act="zoom">🔍 ${t('Smell the aroma', 'Zoom to layer')}</button>
-      <button class="btn-ghost" data-act="clear">🗑️ ${t('Dump the grounds', 'Clear data')}</button>
+      <p class="hint mt-4">${types}${size ? `<br>${size}` : ''}</p>
+      <div class="grid grid-cols-2 gap-2 mt-5">
+        <button class="btn btn-outline !h-10 !px-3" data-act="zoom">Zoom to layer</button>
+        <button class="btn btn-outline !h-10 !px-3" data-act="table">Open table</button>
+      </div>
+      <div class="text-right mt-2"><button class="btn btn-text !h-8 !text-[13px] !text-mocha" data-act="clear">Remove layer</button></div>
     </div>`;
-  $('#brewCard').classList.remove('hidden');
-  $('#brewCard [data-act="zoom"]').onclick = fitToData;
-  $('#brewCard [data-act="clear"]').onclick = clearData;
+  $('#layerCard').classList.remove('hidden');
+  $('#layerCard [data-act="zoom"]').onclick = fitToData;
+  $('#layerCard [data-act="table"]').onclick = () => showTab('table');
+  $('#layerCard [data-act="clear"]').onclick = clearData;
 }
 
+function hexA(hex, a) { const n = parseInt(hex.replace('#', ''), 16); return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`; }
 function updateLegend() {
   const lg = $('#legend');
   if (!state.data || !state.legend) { lg.classList.add('hidden'); return; }
   const dom = dominantGeom(), sw = $('#legendSwatch'), s = state.style;
-  sw.style.background = hexA(s.color, s.opacity);
-  sw.className = 'shrink-0 border border-white/70 ' + (dom === 'Point' ? 'w-3.5 h-3.5 rounded-full' : dom === 'LineString' ? 'w-5 h-[4px] rounded-full border-0' : 'w-4 h-3.5 rounded-[3px]');
-  $('#legendHead').textContent = t('On the menu', 'Legend');
-  $('#legendName').textContent = state.name.replace(/\.[^.]+$/, '');
-  $('#legendCount').textContent = `${fmt(state.data.features.length)} ${t('beans', 'features')} · ${grindLabel(state.format)}`;
+  sw.style.background = dom === 'LineString' ? s.color : hexA(s.color, Math.max(0.35, s.opacity));
+  sw.style.border = dom === 'LineString' ? '0' : `1.5px solid ${s.color}`;
+  sw.style.width = dom === 'LineString' ? '22px' : '14px';
+  sw.style.height = dom === 'LineString' ? '4px' : '14px';
+  sw.style.borderRadius = dom === 'Polygon' ? '3px' : '99px';
+  $('#legendName').textContent = prettyName(state.name);
+  $('#legendCount').textContent = `${fmt(state.data.features.length)} features`;
   lg.classList.remove('hidden');
 }
-function hexA(hex, a) {
-  const h = hex.replace('#', ''); const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
-  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
-}
 
-/* ---------------------------------------------------------------------
-   Export (GeoJSON / KML / CSV)
---------------------------------------------------------------------- */
-function updateExportState() {
-  $('#exportState').textContent = state.data ? `${fmt(state.data.features.length)} ${t('beans ready', 'features ready')}` : t('awaiting beans', 'no data');
-}
-function cleanFC() {
-  return { type: 'FeatureCollection', features: state.data.features.map(f => ({ type: 'Feature', geometry: f.geometry, properties: f.properties })) };
-}
+/* ------------------------------ Export ------------------------------ */
+const cleanFC = () => ({ type: 'FeatureCollection', features: state.data.features.map(f => ({ type: 'Feature', geometry: f.geometry, properties: f.properties })) });
 const xmlEsc = s => String(s ?? '').replace(/[<>&'"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
 function toKML(fc, name) {
   const cs = arr => arr.map(c => c.join(',')).join(' ');
@@ -1279,19 +1110,17 @@ function toKML(fc, name) {
   const pms = fc.features.map((f, i) => {
     const p = f.properties || {}, nk = nameKeyOf(p);
     const ext = Object.entries(p).map(([k, v]) => `<Data name="${xmlEsc(k)}"><value>${xmlEsc(v)}</value></Data>`).join('');
-    return `<Placemark><name>${xmlEsc(nk ? p[nk] : 'Feature ' + (i + 1))}</name><styleUrl>#brew</styleUrl><ExtendedData>${ext}</ExtendedData>${g(f.geometry)}</Placemark>`;
+    return `<Placemark><name>${xmlEsc(nk ? p[nk] : 'Feature ' + (i + 1))}</name><styleUrl>#s</styleUrl><ExtendedData>${ext}</ExtendedData>${g(f.geometry)}</Placemark>`;
   }).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${xmlEsc(name)}</name><description>Brewed at GIS.Coffee</description>
-<Style id="brew"><IconStyle><color>${abgr(1)}</color><scale>0.9</scale></IconStyle><LineStyle><color>${abgr(1)}</color><width>${Math.max(1, state.style.width)}</width></LineStyle><PolyStyle><color>${abgr(state.style.opacity * 0.6)}</color></PolyStyle></Style>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${xmlEsc(name)}</name><description>Made with GIS.Coffee</description>
+<Style id="s"><IconStyle><color>${abgr(1)}</color><scale>0.9</scale></IconStyle><LineStyle><color>${abgr(1)}</color><width>${Math.max(1, state.style.width)}</width></LineStyle><PolyStyle><color>${abgr(state.style.opacity * 0.5)}</color></PolyStyle></Style>
 ${pms}
 </Document></kml>`;
 }
 function toWKT(g) {
   if (!g) return '';
-  const c = p => `${p[0]} ${p[1]}`;
-  const l = a => `(${a.map(c).join(', ')})`;
-  const pg = rs => `(${rs.map(l).join(', ')})`;
+  const c = p => `${p[0]} ${p[1]}`, l = a => `(${a.map(c).join(', ')})`, pg = rs => `(${rs.map(l).join(', ')})`;
   switch (g.type) {
     case 'Point': return `POINT (${c(g.coordinates)})`;
     case 'LineString': return `LINESTRING ${l(g.coordinates)}`;
@@ -1306,32 +1135,24 @@ function toWKT(g) {
 function toCSV(fc) {
   const fields = getFields();
   const q = v => { if (v === null || v === undefined) return ''; const s = String(v); return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
-  const head = [...fields, 'latitude', 'longitude', 'wkt'];
-  const lines = [head.map(q).join(',')];
+  const lines = [[...fields, 'latitude', 'longitude', 'wkt'].map(q).join(',')];
   fc.features.forEach(f => {
     let lat = '', lon = '';
-    if (f.geometry) {
-      try {
-        const c = f.geometry.type === 'Point' ? f.geometry.coordinates : turf.centroid(f).geometry.coordinates;
-        lon = +c[0].toFixed(7); lat = +c[1].toFixed(7);
-      } catch (_) {}
-    }
+    if (f.geometry) { try { const c = f.geometry.type === 'Point' ? f.geometry.coordinates : turf.centroid(f).geometry.coordinates; lon = +c[0].toFixed(7); lat = +c[1].toFixed(7); } catch (_) {} }
     lines.push([...fields.map(k => q(f.properties[k])), lat, lon, q(toWKT(f.geometry))].join(','));
   });
   return '\uFEFF' + lines.join('\r\n');
 }
-function exportData() {
+function exportData(kind) {
   if (!state.data) return;
-  const kind = $('#exportFmt').value, base = slug(state.name), fc = cleanFC();
+  const base = slug(state.name), fc = cleanFC();
   if (kind === 'geojson') downloadBlob(new Blob([JSON.stringify(fc)], { type: 'application/geo+json' }), base + '.geojson');
   else if (kind === 'kml') downloadBlob(new Blob([toKML(fc, state.name)], { type: 'application/vnd.google-earth.kml+xml' }), base + '.kml');
   else downloadBlob(new Blob([toCSV(fc)], { type: 'text/csv;charset=utf-8' }), base + '.csv');
-  toast(t(`Your ${kind.toUpperCase()} to-go cup is ready. Careful, it's hot!`, `Exported ${kind.toUpperCase()}.`), 'ok', 2500);
+  toast(`${kind.toUpperCase()} downloaded. Enjoy it while it's hot.`, 'ok', 2500);
 }
 
-/* ---------------------------------------------------------------------
-   Table (Tabulator) + bi-directional linking
---------------------------------------------------------------------- */
+/* ------------------------------ Table ------------------------------ */
 function getFields() {
   if (!state.data) return [];
   const set = new Set();
@@ -1343,73 +1164,56 @@ function buildTable() {
   if (state.table) { state.table.destroy(); state.table = null; }
   const fields = getFields();
   const columns = [
-    { title: '#', field: '__bid', width: 58, frozen: true, hozAlign: 'right', headerSort: true, formatter: c => c.getValue() + 1 },
-    ...fields.map(f => ({ title: f, field: f, editor: 'input', headerFilter: 'input', headerFilterPlaceholder: t('sift…', 'filter…'), minWidth: 110, maxWidth: 320, tooltip: true }))
+    { title: '#', field: '__row', width: 56, frozen: true, hozAlign: 'right', formatter: c => c.getValue() + 1 },
+    ...fields.map(f => ({ title: f, field: f, editor: 'input', headerFilter: 'input', headerFilterPlaceholder: 'Filter…', minWidth: 110, maxWidth: 320, tooltip: true }))
   ];
-  const rows = state.data.features.map((f, i) => ({ ...f.properties, __bid: i }));
+  const rows = state.data.features.map((f, i) => ({ ...f.properties, __row: i }));
   state.table = new Tabulator('#grid', {
-    data: rows, columns, index: '__bid', height: '100%', layout: 'fitDataFill',
+    data: rows, columns, index: '__row', height: '100%', layout: 'fitDataFill',
     nestedFieldSeparator: false, selectableRows: 1, editTriggerEvent: 'dblclick',
-    placeholder: t('No beans match that sift.', 'No matching rows.'),
-    columnDefaults: { headerTooltip: true }
+    placeholder: 'No rows match your filter', columnDefaults: { headerTooltip: true }
   });
   state.table.on('rowClick', (e, row) => {
-    const id = row.getData().__bid;
-    zoomToFeature(id);
-    const f = state.data.features[id];
-    if (f && f.geometry) { try { const c = f.geometry.type === 'Point' ? f.geometry.coordinates : turf.pointOnFeature(f).geometry.coordinates; map.once('moveend', () => openPopup(f, { lng: c[0], lat: c[1] })); } catch (_) {} }
+    zoomToFeature(row.getData().__row, f => {
+      try { const c = f.geometry.type === 'Point' ? f.geometry.coordinates : turf.pointOnFeature(f).geometry.coordinates; openPopup(f, { lng: c[0], lat: c[1] }); } catch (_) {}
+    });
   });
   state.table.on('cellEdited', cell => {
-    const field = cell.getField(), row = cell.getRow(), id = row.getData().__bid;
-    const f = state.data.features[id]; if (!f) return;
+    const field = cell.getField(), row = cell.getRow(), id = row.getData().__row, f = state.data.features[id];
+    if (!f) return;
     let v = cell.getValue(); const old = cell.getOldValue();
     if (typeof old === 'number' && v !== '' && v !== null && !isNaN(Number(v))) v = Number(v);
     if (v === '') v = null;
     f.properties[field] = v;
     row.update({ [field]: v });
-    if (map.getSource('brew')) map.getSource('brew').setData(state.data);
+    if (map.getSource('lyr')) map.getSource('lyr').setData(state.data);
     state.edits++;
-    $('#editCount').textContent = `${state.edits} ${t(state.edits === 1 ? 'tweak stirred in' : 'tweaks stirred in', state.edits === 1 ? 'edit applied' : 'edits applied')}`;
-    const el = cell.getElement(); el.classList.remove('cell-flash'); void el.offsetWidth; el.classList.add('cell-flash');
+    $('#editCount').textContent = `${state.edits} ${state.edits === 1 ? 'edit' : 'edits'} saved`;
+    const el = cell.getElement(); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
     if ($('#fieldSelect').value === field) renderChart();
   });
-  state.table.on('dataFiltered', (filters, rows) => updateRowCount(rows.length));
-  state.table.on('tableBuilt', () => updateRowCount(rows.length));
+  state.table.on('dataFiltered', (filters, r) => updateRowCount(r.length));
   updateRowCount(rows.length);
   state.tableDirty = false;
   $('#editCount').textContent = '';
 }
 function updateRowCount(shown) {
   const total = state.data ? state.data.features.length : 0;
-  $('#rowCount').innerHTML = shown === total
-    ? `<b class="text-foam">${fmt(total)}</b> ${t('beans in the cup', 'rows')}`
-    : `<b class="text-foam">${fmt(shown)}</b> ${t('of', 'of')} ${fmt(total)} ${t('beans after sifting', 'rows (filtered)')}`;
+  $('#rowCount').innerHTML = shown === total ? `<b class="text-espresso">${fmt(total)}</b> rows` : `<b class="text-espresso">${fmt(shown)}</b> of ${fmt(total)} rows`;
 }
 function selectRow(id) {
   if (!state.table || state.tableDirty) return;
-  try {
-    state.table.deselectRow();
-    state.table.selectRow(id);
-    const p = state.table.scrollToRow(id, 'center', false);
-    if (p && p.catch) p.catch(() => {});
-  } catch (_) {}
+  try { state.table.deselectRow(); state.table.selectRow(id); const p = state.table.scrollToRow(id, 'center', false); p && p.catch && p.catch(() => {}); } catch (_) {}
 }
 
-/* ---------------------------------------------------------------------
-   Chart (Chart.js) — Flavor profile
---------------------------------------------------------------------- */
+/* ------------------------------ Chart ------------------------------ */
 Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
-Chart.defaults.color = '#cdb8a3';
+Chart.defaults.color = '#5c4033';
 
 function populateFieldSelect() {
-  const fields = getFields(), sel = $('#fieldSelect');
-  sel.innerHTML = fields.length ? fields.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('') : `<option value="">${t('No notes to taste', 'No fields')}</option>`;
-  // Smart default: a categorical-ish field
-  const n = state.data.features.length;
-  const best = fields.find(f => {
-    const u = new Set(state.data.features.map(x => x.properties[f])).size;
-    return u >= 2 && u <= Math.max(12, n * 0.3) && u < n;
-  });
+  const fields = getFields(), sel = $('#fieldSelect'), n = state.data.features.length;
+  sel.innerHTML = fields.length ? fields.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('') : '<option value="">No fields</option>';
+  const best = fields.find(f => { const u = new Set(state.data.features.map(x => x.properties[f])).size; return u >= 2 && u <= Math.max(12, n * 0.3) && u < n; });
   if (best) sel.value = best;
 }
 function renderChart() {
@@ -1419,87 +1223,65 @@ function renderChart() {
   const vals = state.data.features.map(f => f.properties[field]);
   const total = vals.length, counts = new Map(), nums = [];
   let filled = 0;
-  const emptyLabel = t('(empty cup)', '(empty)');
   vals.forEach(v => {
     const empty = v === null || v === undefined || v === '';
-    const k = empty ? emptyLabel : String(v);
+    const k = empty ? '(blank)' : String(v);
     counts.set(k, (counts.get(k) || 0) + 1);
     if (!empty) { filled++; nums.push(typeof v === 'number' ? v : (typeof v === 'string' && v.trim() !== '' && !isNaN(v) ? Number(v) : NaN)); }
   });
   const numeric = nums.length > 0 && nums.every(Number.isFinite);
-  const unique = counts.size;
   const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-
   $('#stTotal').textContent = fmt(total);
-  $('#stUnique').textContent = fmt(unique);
+  $('#stUnique').textContent = fmt(counts.size);
   $('#stFill').textContent = total ? Math.round(filled / total * 100) + '%' : '–';
-  $('#numTiles').classList.toggle('hidden', !numeric);
+  $('#numStats').classList.toggle('hidden', !numeric);
   if (numeric) {
-    const mn = Math.min(...nums), mx = Math.max(...nums), mean = nums.reduce((a, b) => a + b, 0) / nums.length;
-    $('#stMin').textContent = fmt(mn, 2); $('#stMax').textContent = fmt(mx, 2); $('#stMean').textContent = fmt(mean, 2);
+    let mn = Infinity, mx = -Infinity, sum = 0; nums.forEach(x => { if (x < mn) mn = x; if (x > mx) mx = x; sum += x; });
+    $('#stMin').textContent = fmt(mn, 2); $('#stMax').textContent = fmt(mx, 2); $('#stMean').textContent = fmt(sum / nums.length, 2);
   }
-
-  const fullLabels = [t('Total beans', 'Total records'), t('Unique notes', 'Unique values'), ...top.map(([k]) => k)];
-  const labels = fullLabels.map(l => trunc(l, 20));
-  const data = [total, unique, ...top.map(x => x[1])];
-  const colors = ['#e0b57a', '#c07f3e', '#8b5a3c', '#9a6848', '#a97655', '#b88563', '#c69572'];
+  const full = ['Total records', 'Unique values', ...top.map(([k]) => k)];
+  const data = [total, counts.size, ...top.map(x => x[1])];
+  const colors = ['#2a1b14', '#8a4f24', '#c98a4b', '#d49d66', '#dcb081', '#e4c29c', '#ecd4b8'];
   if (state.chart) state.chart.destroy();
   state.chart = new Chart($('#chart'), {
     type: 'bar',
-    data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, data.length), borderRadius: 7, borderSkipped: false, maxBarThickness: 24 }] },
+    data: { labels: full.map(l => trunc(l, 20)), datasets: [{ data, backgroundColor: colors.slice(0, data.length), borderRadius: 6, borderSkipped: false, maxBarThickness: 22 }] },
     options: {
-      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-      animation: { duration: 650, easing: 'easeOutQuart' },
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: { duration: 500 },
       plugins: {
         legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1b1310', borderColor: '#3a2a22', borderWidth: 1, titleColor: '#f4ebe0', bodyColor: '#cdb8a3', padding: 10, cornerRadius: 10,
-          callbacks: {
-            title: items => fullLabels[items[0].dataIndex],
-            label: c => c.dataIndex > 1 ? `${fmt(c.raw)} ${t('beans', 'records')} · ${(c.raw / total * 100).toFixed(1)}%` : fmt(c.raw)
-          }
-        }
+        tooltip: { backgroundColor: '#2a1b14', padding: 10, cornerRadius: 10, callbacks: {
+          title: items => full[items[0].dataIndex],
+          label: c => c.dataIndex > 1 ? `${fmt(c.raw)} records (${(c.raw / total * 100).toFixed(1)}%)` : fmt(c.raw)
+        } }
       },
       scales: {
-        x: { beginAtZero: true, grid: { color: 'rgba(244,235,224,.06)' }, border: { display: false }, ticks: { color: '#8f7a69', precision: 0 } },
-        y: { grid: { display: false }, border: { display: false }, ticks: { color: '#e8dccd', font: { size: 11, weight: 500 } } }
+        x: { beginAtZero: true, grid: { color: '#f1e9e0' }, border: { display: false }, ticks: { precision: 0, color: '#6e5b4e' } },
+        y: { grid: { display: false }, border: { display: false }, ticks: { color: '#2a1b14', font: { size: 12, weight: 500 } } }
       }
     }
   });
   state.chartDirty = false;
 }
 
-/* ---------------------------------------------------------------------
-   Print map → PNG (map canvas + overlays composited)
---------------------------------------------------------------------- */
+/* --------------------------- Print to PNG --------------------------- */
 function rr(ctx, x, y, w, h, r) {
   r = Math.max(0, Math.min(r, w / 2, h / 2));
-  ctx.beginPath();
-  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
-}
-function solidify(rgba, min = 0.9) {
-  const m = rgba.match(/rgba?\(([^)]+)\)/); if (!m) return rgba;
-  const p = m[1].split(',').map(s => s.trim());
-  return `rgba(${p[0]}, ${p[1]}, ${p[2]}, ${Math.max(min, p[3] !== undefined ? parseFloat(p[3]) : 1)})`;
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
 }
 function wrapLines(ctx, text, maxW) {
   const words = String(text).split(/\s+/).filter(Boolean), lines = []; let line = '';
-  words.forEach(w => { const test = line ? line + ' ' + w : w; if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = w; } else line = test; });
+  words.forEach(w => { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; });
   if (line) lines.push(line);
   return lines;
 }
 function drawCard(ctx, card, base, r) {
-  if (!card || card.classList.contains('hidden') || getComputedStyle(card).display === 'none') return;
+  if (!card || card.classList.contains('hidden')) return;
   const cs = getComputedStyle(card), rc = card.getBoundingClientRect();
-  const x = (rc.left - base.left) * r, y = (rc.top - base.top) * r, w = rc.width * r, h = rc.height * r;
-  const rad = (parseFloat(cs.borderTopLeftRadius) || 0) * r;
-  ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 24 * r; ctx.shadowOffsetY = 6 * r;
-  rr(ctx, x, y, w, h, rad); ctx.fillStyle = solidify(cs.backgroundColor); ctx.fill();
-  ctx.restore();
-  ctx.save();
-  rr(ctx, x, y, w, h, rad); ctx.clip();
+  const x = (rc.left - base.left) * r, y = (rc.top - base.top) * r, w = rc.width * r, h = rc.height * r, rad = (parseFloat(cs.borderTopLeftRadius) || 0) * r;
+  ctx.save(); ctx.shadowColor = 'rgba(42,27,20,.18)'; ctx.shadowBlur = 24 * r; ctx.shadowOffsetY = 6 * r;
+  rr(ctx, x, y, w, h, rad); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.restore();
+  ctx.save(); rr(ctx, x, y, w, h, rad); ctx.clip();
   $$('[data-print]', card).forEach(el => {
     const s = getComputedStyle(el);
     if (s.display === 'none' || !el.getClientRects().length) return;
@@ -1522,225 +1304,148 @@ function drawCard(ctx, card, base, r) {
     if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
   });
   ctx.restore();
-  ctx.lineWidth = 1 * r; ctx.strokeStyle = cs.borderTopColor; rr(ctx, x + 0.5 * r, y + 0.5 * r, w - r, h - r, rad); ctx.stroke();
 }
 function compose(mapCanvas) {
-  const base = $('#map').getBoundingClientRect();
-  const W = mapCanvas.width, H = mapCanvas.height, r = W / base.width;
+  const base = $('#map').getBoundingClientRect(), W = mapCanvas.width, H = mapCanvas.height, r = W / base.width;
   const c = document.createElement('canvas'); c.width = W; c.height = H;
   const ctx = c.getContext('2d');
   ctx.drawImage(mapCanvas, 0, 0);
   drawCard(ctx, $('#titleCard'), base, r);
   drawCard(ctx, $('#legend'), base, r);
-  // Credit pill
-  const attrib = state.basemap === 'osm' ? '© OpenStreetMap contributors' : '© OpenStreetMap contributors © CARTO';
-  const credit = `${attrib}  ·  Brewed at GIS.Coffee ☕`;
+  const credit = (state.basemap === 'osm' ? '© OpenStreetMap contributors' : '© OpenStreetMap contributors © CARTO') + '  ·  Made with GIS.Coffee';
   ctx.font = `500 ${11 * r}px Inter, sans-serif`;
-  const tw = ctx.measureText(credit).width, pad = 8 * r, ph = 22 * r;
-  const px = W - tw - pad * 2 - 12 * r, py = H - ph - 12 * r;
-  rr(ctx, px, py, tw + pad * 2, ph, 11 * r); ctx.fillStyle = 'rgba(18,12,9,.82)'; ctx.fill();
-  ctx.fillStyle = '#cdb8a3'; ctx.textBaseline = 'middle'; ctx.fillText(credit, px + pad, py + ph / 2);
+  const tw = ctx.measureText(credit).width, pad = 9 * r, ph = 22 * r, px = W - tw - pad * 2 - 12 * r, py = H - ph - 12 * r;
+  rr(ctx, px, py, tw + pad * 2, ph, 11 * r); ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fill();
+  ctx.fillStyle = '#5c4033'; ctx.textBaseline = 'middle'; ctx.fillText(credit, px + pad, py + ph / 2);
   return c;
 }
 async function printMap() {
   const target = Number($('#shotSize').value) || 2;
-  busy(true, t('Pulling your shot…', 'Rendering PNG…'));
+  busy(true, 'Pulling your shot…');
   const orig = typeof map.getPixelRatio === 'function' ? map.getPixelRatio() : window.devicePixelRatio;
   const canScale = typeof map.setPixelRatio === 'function';
   try {
     await document.fonts.ready;
     if (canScale && target !== orig) map.setPixelRatio(target);
-    await new Promise(res => { let done = false; const fin = () => { if (!done) { done = true; res(); } }; map.once('idle', fin); map.triggerRepaint(); setTimeout(fin, 10000); });
-    const out = await new Promise((res, rej) => {
-      map.once('render', () => { try { res(compose(map.getCanvas())); } catch (e) { rej(e); } });
-      map.triggerRepaint();
-    });
+    await new Promise(res => { let d = false; const fin = () => { if (!d) { d = true; res(); } }; map.once('idle', fin); map.triggerRepaint(); setTimeout(fin, 10000); });
+    const out = await new Promise((res, rej) => { map.once('render', () => { try { res(compose(map.getCanvas())); } catch (e) { rej(e); } }); map.triggerRepaint(); });
     const blob = await new Promise(res => out.toBlob(res, 'image/png'));
-    if (!blob) throw new Error('Canvas export failed.');
+    if (!blob) throw new Error('The image could not be created.');
     downloadBlob(blob, slug($('#titleInput').value || 'gis-coffee-map') + '.png');
-    toast(t(`Shot pulled: ${out.width}×${out.height}px of pure crema.`, `Exported PNG (${out.width}×${out.height}px).`), 'ok');
-  } catch (e) {
-    console.error(e);
-    toast(t('The shot came out bitter: ', 'PNG export failed: ') + esc(e.message), 'err', 5000);
-  } finally {
-    if (canScale && target !== orig) map.setPixelRatio(orig);
-    busy(false);
-  }
+    toast(`Map saved (${out.width} × ${out.height} px).`, 'ok');
+  } catch (e) { console.error(e); toast('Could not save the map: ' + esc(e.message), 'err', 5000); }
+  finally { if (canScale && target !== orig) map.setPixelRatio(orig); busy(false); }
 }
 
-/* ---------------------------------------------------------------------
-   House sample (fictional Twin Cities coffee crawl)
---------------------------------------------------------------------- */
+/* ------------------------------ Sample ------------------------------ */
 function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let x = Math.imul(a ^ a >>> 15, 1 | a); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
 function makeSample() {
   const rnd = mulberry32(2026);
-  const hoods = [['North Loop', -93.276, 44.989], ['Uptown', -93.298, 44.949], ['Northeast', -93.247, 45.005], ['Longfellow', -93.221, 44.935],
-                 ['Downtown East', -93.258, 44.975], ['Dinkytown', -93.236, 44.981], ['Lowertown', -93.086, 44.949], ['Grand Ave', -93.141, 44.940],
-                 ['Highland Park', -93.176, 44.916], ['Linden Hills', -93.318, 44.925], ['Plymouth', -93.455, 45.010], ['Edina', -93.350, 44.890]];
-  const pre = ['Bean', 'Crema', 'Roast', 'Grind', 'Drip', 'Mocha', 'Kettle', 'Latte', 'Ember', 'Portafilter'];
-  const suf = ['Lab', 'House', 'Co.', 'Collective', 'Bar', 'Society', 'Works', 'Corner'];
-  const roasts = ['Light', 'Medium', 'Medium', 'Dark', 'Espresso'];
-  const feats = [];
+  const hoods = [['North Loop', -93.276, 44.989], ['Uptown', -93.298, 44.949], ['Northeast', -93.247, 45.005], ['Longfellow', -93.221, 44.935], ['Downtown East', -93.258, 44.975], ['Dinkytown', -93.236, 44.981],
+                 ['Lowertown', -93.086, 44.949], ['Grand Ave', -93.141, 44.940], ['Highland Park', -93.176, 44.916], ['Linden Hills', -93.318, 44.925], ['Plymouth', -93.455, 45.010], ['Edina', -93.350, 44.890]];
+  const pre = ['Bean', 'Crema', 'Roast', 'Grind', 'Drip', 'Mocha', 'Kettle', 'Latte', 'Ember', 'Portafilter'], suf = ['Lab', 'House', 'Co.', 'Collective', 'Bar', 'Society', 'Works', 'Corner'];
+  const roasts = ['Light', 'Medium', 'Medium', 'Dark', 'Espresso'], feats = [];
   for (let i = 0; i < 42; i++) {
     const h = hoods[i % hoods.length];
     feats.push(turf.point([+(h[1] + (rnd() - 0.5) * 0.034).toFixed(6), +(h[2] + (rnd() - 0.5) * 0.022).toFixed(6)], {
-      name: `${pre[i % 10]} ${suf[(i + Math.floor(i / 10)) % 8]}`, type: 'Café', roast: roasts[Math.floor(rnd() * roasts.length)],
-      neighborhood: h[0], rating: +(3.2 + rnd() * 1.8).toFixed(1), cups_per_day: Math.round(120 + rnd() * 780),
-      wifi: rnd() > 0.25 ? 'Yes' : 'No', opened: 1998 + Math.floor(rnd() * 28)
+      name: `${pre[i % 10]} ${suf[(i + Math.floor(i / 10)) % 8]}`, type: 'Café', roast: roasts[Math.floor(rnd() * roasts.length)], neighborhood: h[0],
+      rating: +(3.2 + rnd() * 1.8).toFixed(1), cups_per_day: Math.round(120 + rnd() * 780), wifi: rnd() > 0.25 ? 'Yes' : 'No', opened: 1998 + Math.floor(rnd() * 28)
     }));
   }
-  const cafes = feats.slice();
-  const nulls = { rating: null, cups_per_day: null, wifi: null, opened: null };
+  const cafes = feats.slice(), nulls = { rating: null, cups_per_day: null, wifi: null, opened: null };
   [...cafes].sort((a, b) => b.properties.rating - a.properties.rating).slice(0, 3).forEach(f => {
     const c = turf.circle(f.geometry.coordinates, 1.2, { steps: 64, units: 'kilometers' });
-    c.properties = { name: f.properties.name + ' Delivery Zone', type: 'Delivery zone', roast: f.properties.roast, neighborhood: f.properties.neighborhood, ...nulls };
+    c.properties = { name: f.properties.name + ' delivery zone', type: 'Delivery zone', roast: f.properties.roast, neighborhood: f.properties.neighborhood, ...nulls };
     feats.unshift(c);
   });
   const route = cafes.filter((_, i) => i % 6 === 0).sort((a, b) => a.geometry.coordinates[0] - b.geometry.coordinates[0]).map(f => f.geometry.coordinates);
-  feats.unshift(turf.lineString(route, { name: 'Caffeine Crawl Route', type: 'Crawl route', roast: 'Mixed', neighborhood: 'Twin Cities', ...nulls }));
+  feats.unshift(turf.lineString(route, { name: 'Coffee crawl route', type: 'Route', roast: 'Mixed', neighborhood: 'Twin Cities', ...nulls }));
   return turf.featureCollection(feats);
 }
+function loadSample() {
+  clearError();
+  try {
+    loadData(normalize(makeSample(), 'Sample data'), 'Twin Cities coffee crawl.geojson', 'sample');
+    if (!$('#subtitleInput').dataset.touched) { $('#subtitleInput').value = 'Sample data: fictional cafés, delivery zones and a route'; updateTitle(); }
+  } catch (e) { console.error(e); toast('Sample failed to load: ' + esc(e.message), 'err'); }
+}
 
-/* ---------------------------------------------------------------------
-   Tabs, barista-speak mode & UI wiring
---------------------------------------------------------------------- */
+/* ---------------------------- UI wiring ---------------------------- */
 function showTab(name) {
   state.tab = name;
-  $$('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-  $$('.tab-panel').forEach(p => p.classList.toggle('hidden', p.id !== 'panel-' + name));
+  $$('.tab').forEach(b => { const on = b.dataset.tab === name; b.classList.toggle('active', on); b.setAttribute('aria-selected', on); });
+  $$('.panel').forEach(p => p.classList.toggle('hidden', p.id !== 'panel-' + name));
   $('#panels').scrollTop = 0;
-  if (name === 'taste' && state.data) {
-    requestAnimationFrame(() => {
-      if (state.tableDirty || !state.table) buildTable(); else state.table.redraw(true);
-      if (state.chartDirty || !state.chart) renderChart();
-    });
-  }
+  if (name === 'table' && state.data) requestAnimationFrame(() => {
+    if (state.tableDirty || !state.table) buildTable(); else state.table.redraw(true);
+    if (state.chartDirty || !state.chart) renderChart();
+  });
 }
-
-function applyMode() {
-  const on = state.coffee;
-  $$('[data-brew]').forEach(el => { el.textContent = on ? el.dataset.brew : el.dataset.plain; });
-  const mt = $('#modeToggle'); mt.classList.toggle('is-on', on); mt.setAttribute('aria-pressed', String(on));
-  $('#latLabel').textContent = t('Latte', 'Lat');
-  $('#lonLabel').textContent = t('Long Black', 'Lon');
-  $('#titleInput').placeholder = t('e.g. Twin Cities Coffee Crawl', 'Map title');
-  $('#subtitleInput').placeholder = t('e.g. Where the good beans are', 'Map subtitle');
-  $('#widenLabel').textContent = $('#sidebar').classList.contains('wide') ? t('Short pour', 'Narrow') : t('Grande', 'Widen');
-  document.title = on ? 'GIS.Coffee — Freshly Brewed Web GIS' : 'GIS.Coffee — Client-side Web GIS';
-  updateExportState();
-  if (state.data) {
-    renderBrewCard(); updateLegend();
-    if (state.table) { updateRowCount(state.table.getDataCount('active')); if (state.edits) $('#editCount').textContent = `${state.edits} ${t('tweaks stirred in', 'edits applied')}`; }
-    if (state.chart) renderChart();
-  }
-}
-
 function updateTitle() {
   const title = $('#titleInput').value.trim(), sub = $('#subtitleInput').value.trim();
   $('#mapTitle').textContent = title; $('#mapSubtitle').textContent = sub;
   $('#mapTitle').classList.toggle('hidden', !title);
   $('#mapSubtitle').classList.toggle('hidden', !sub);
-  $('#mapSubtitle').classList.toggle('mt-1', !!title);
+  $('#mapSubtitle').classList.toggle('mt-1.5', !!title);
   $('#titleCard').classList.toggle('hidden', !title && !sub);
-  const serif = $('#titleFont').value === 'serif';
-  $('#mapTitle').classList.toggle('font-display', serif);
-  $('#mapTitle').classList.toggle('font-sans', !serif);
-  $('#mapTitle').classList.toggle('tracking-tight', !serif);
+  $('#mapTitle').classList.toggle('font-display', state.serif);
+  $('#mapTitle').classList.toggle('font-sans', !state.serif);
 }
-
-function setSliderFill(el) {
-  const p = (el.value - el.min) / (el.max - el.min) * 100;
-  el.style.setProperty('--p', p + '%');
-}
-
-const SWATCHES = [['#d6a86c', 'Crema'], ['#c07f3e', 'Caramel'], ['#8b5a3c', 'Mocha'], ['#f4ebe0', 'Oat milk'], ['#8fb573', 'Matcha'], ['#6c9ee0', 'Blueberry muffin'], ['#d9665b', 'Cherry (coffee fruit)']];
+const setFill = el => el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%');
+const SWATCHES = [['#b8662a', 'Caramel'], ['#2a1b14', 'Espresso'], ['#c0392b', 'Cherry'], ['#2f6fb5', 'Blueberry'], ['#3f7d3a', 'Matcha'], ['#7b4fa0', 'Lavender']];
 function setColor(hex) {
-  state.style.color = hex;
-  $('#colorPicker').value = hex;
-  $('#colorHex').textContent = hex.toUpperCase();
-  $$('.swatch-btn').forEach(b => b.classList.toggle('sel', b.dataset.c.toLowerCase() === hex.toLowerCase()));
+  state.style.color = hex; $('#colorPicker').value = hex;
+  $$('.sw').forEach(b => b.classList.toggle('sel', b.dataset.c.toLowerCase() === hex.toLowerCase()));
   applyStyle();
 }
 
 function wire() {
-  // Tabs
-  $$('.tab-btn').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+  $$('.tab').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
   $$('[data-goto]').forEach(b => b.addEventListener('click', () => showTab(b.dataset.goto)));
 
-  // Barista speak toggle
-  $('#modeToggle').addEventListener('click', () => {
-    state.coffee = !state.coffee;
-    localStorage.setItem('gc-coffee', state.coffee ? '1' : '0');
-    applyMode();
-    toast(state.coffee ? 'Barista speak is <b>on</b>. Espresso yourself. ☕' : 'Barista speak is <b>off</b>. Plain GIS terminology.', 'info', 2200);
-  });
-
-  // Upload
   const dz = $('#dropzone'), fi = $('#fileInput');
-  dz.addEventListener('click', () => fi.click());
   dz.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fi.click(); } });
   fi.addEventListener('change', () => handleFiles(fi.files));
+  $('#welcomeUpload').addEventListener('click', () => fi.click());
+  $('#welcomeSample').addEventListener('click', loadSample);
+  $('#sampleBtn').addEventListener('click', loadSample);
+
   let depth = 0;
   const hasFiles = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files');
-  window.addEventListener('dragenter', e => { if (!hasFiles(e)) return; e.preventDefault(); depth++; $('#dropVeil').classList.remove('hidden'); dz.classList.add('dz-active'); });
+  window.addEventListener('dragenter', e => { if (!hasFiles(e)) return; e.preventDefault(); depth++; $('#dropVeil').classList.remove('hidden'); dz.classList.add('on'); });
   window.addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
-  window.addEventListener('dragleave', e => { if (!hasFiles(e)) return; depth = Math.max(0, depth - 1); if (!depth) { $('#dropVeil').classList.add('hidden'); dz.classList.remove('dz-active'); } });
-  window.addEventListener('drop', e => {
-    if (!hasFiles(e)) return;
-    e.preventDefault(); depth = 0;
-    $('#dropVeil').classList.add('hidden'); dz.classList.remove('dz-active');
-    handleFiles(e.dataTransfer.files);
-  });
+  window.addEventListener('dragleave', e => { if (!hasFiles(e)) return; depth = Math.max(0, depth - 1); if (!depth) { $('#dropVeil').classList.add('hidden'); dz.classList.remove('on'); } });
+  window.addEventListener('drop', e => { if (!hasFiles(e)) return; e.preventDefault(); depth = 0; $('#dropVeil').classList.add('hidden'); dz.classList.remove('on'); handleFiles(e.dataTransfer.files); });
   $('#errorClose').addEventListener('click', clearError);
-  $('#sampleBtn').addEventListener('click', () => {
-    clearError();
-    try { loadData(normalize(makeSample(), 'sample'), 'twin-cities-coffee-crawl.geojson', 'sample'); }
-    catch (e) { console.error(e); toast('Sample failed: ' + esc(e.message), 'err'); }
-    if (!$('#titleInput').dataset.touched) { $('#titleInput').value = 'Twin Cities Coffee Crawl'; $('#subtitleInput').value = 'Fictional cafés, delivery zones & a caffeine route · GIS.Coffee'; updateTitle(); }
-  });
 
-  // Export
-  $('#exportBtn').addEventListener('click', exportData);
+  $$('.exp').forEach(b => b.addEventListener('click', () => exportData(b.dataset.fmt)));
 
-  // Titles
   ['titleInput', 'subtitleInput'].forEach(id => $('#' + id).addEventListener('input', e => { e.target.dataset.touched = '1'; updateTitle(); }));
-  $('#titleFont').addEventListener('change', updateTitle);
-  $('#legendToggle').addEventListener('click', e => {
-    state.legend = !state.legend;
-    e.currentTarget.classList.toggle('is-on', state.legend);
-    updateLegend();
-  });
+  $('#legendToggle').addEventListener('click', e => { state.legend = !state.legend; e.currentTarget.classList.toggle('on', state.legend); updateLegend(); });
+  $('#serifToggle').addEventListener('click', e => { state.serif = !state.serif; e.currentTarget.classList.toggle('on', state.serif); updateTitle(); });
 
-  // Basemaps
-  $$('.roast-opt').forEach(o => o.addEventListener('click', () => setBasemap(o.dataset.basemap)));
+  $$('.bm').forEach(o => o.addEventListener('click', () => setBasemap(o.dataset.basemap)));
 
-  // Symbology
-  $('#swatches').innerHTML = SWATCHES.map(([c, n]) => `<button class="swatch-btn" data-c="${c}" title="${n}" style="background:${c}"></button>`).join('');
-  $$('.swatch-btn').forEach(b => b.addEventListener('click', () => setColor(b.dataset.c)));
+  $('#swatches').innerHTML = SWATCHES.map(([c, n]) => `<button class="sw" data-c="${c}" title="${n}" aria-label="${n}" style="background:${c}"></button>`).join('');
+  $$('.sw').forEach(b => b.addEventListener('click', () => setColor(b.dataset.c)));
   $('#colorPicker').addEventListener('input', e => setColor(e.target.value));
   const op = $('#opacitySlider'), wd = $('#widthSlider'), rd = $('#radiusSlider');
-  op.addEventListener('input', () => { state.style.opacity = op.value / 100; $('#opacityVal').textContent = op.value + '%'; setSliderFill(op); applyStyle(); });
-  wd.addEventListener('input', () => { state.style.width = +wd.value; $('#widthVal').textContent = (+wd.value).toFixed(1); setSliderFill(wd); applyStyle(); });
-  rd.addEventListener('input', () => { state.style.radius = +rd.value; $('#radiusVal').textContent = rd.value; setSliderFill(rd); applyStyle(); });
-  [op, wd, rd].forEach(setSliderFill);
+  op.addEventListener('input', () => { state.style.opacity = op.value / 100; $('#opacityVal').textContent = op.value + '%'; setFill(op); applyStyle(); });
+  wd.addEventListener('input', () => { state.style.width = +wd.value; $('#widthVal').textContent = wd.value; setFill(wd); applyStyle(); });
+  rd.addEventListener('input', () => { state.style.radius = +rd.value; $('#radiusVal').textContent = rd.value; setFill(rd); applyStyle(); });
+  [op, wd, rd].forEach(setFill);
   setColor(state.style.color);
 
-  // Print
   $('#printBtn').addEventListener('click', printMap);
-
-  // Chart field
   $('#fieldSelect').addEventListener('change', renderChart);
-
-  // Widen sidebar for table
   $('#widenBtn').addEventListener('click', () => {
     const sb = $('#sidebar'); sb.classList.toggle('wide');
-    $('#widenLabel').textContent = sb.classList.contains('wide') ? t('Short pour', 'Narrow') : t('Grande', 'Widen');
-    setTimeout(() => { map.resize(); if (state.table) state.table.redraw(true); if (state.chart) state.chart.resize(); }, 380);
+    $('#widenBtn').textContent = sb.classList.contains('wide') ? 'Collapse' : 'Expand';
+    setTimeout(() => { map.resize(); state.table && state.table.redraw(true); state.chart && state.chart.resize(); }, 330);
   });
 }
 
 wire();
-applyMode();
 updateTitle();
 })();
 </script>
