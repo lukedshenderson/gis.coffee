@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>GIS.Coffee · Make a map from any spatial file</title>
-<meta name="description" content="Drop a Shapefile, KML, GeoJSON, CSV or GeoPackage and instantly map it, explore its table, and export. Free, and your files never leave your browser." />
-<meta property="og:title" content="GIS.Coffee · Freshly brewed maps" />
-<meta property="og:description" content="Map any spatial file in seconds, right in your browser." />
+<title>GIS.Coffee · Convert files, make maps, view attributes</title>
+<meta name="description" content="Convert spatial file formats, make maps, and view attribute tables in your browser. Free, and your files never leave your device." />
+<meta property="og:title" content="GIS.Coffee · Spatial data tools" />
+<meta property="og:description" content="Convert spatial files, make maps, and view attribute tables in your browser." />
 <meta name="theme-color" content="#fbf7f2" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>" />
 
@@ -55,12 +55,10 @@
   #sidebar { transition: width .3s cubic-bezier(.2,.8,.2,1); }
   @media (min-width: 768px) { #sidebar.wide { width: min(860px, 62vw) !important; } }
 
-  /* Tabs — Material-style pill segmented control */
+  /* Tabs */
   .tab { flex:1; display:flex; align-items:center; justify-content:center; gap:8px; height:40px; border-radius:999px; font-size:14px; font-weight:600; color: var(--mocha); transition: background .15s, color .15s; }
   .tab:hover { color: var(--espresso); background: rgba(245,237,228,.7); }
   .tab.active { background: var(--espresso); color: #fff; }
-  .tab .n { width:20px; height:20px; border-radius:99px; display:grid; place-items:center; font-size:11px; font-weight:700; background: var(--milk); color: var(--roast); }
-  .tab.active .n { background: rgba(255,255,255,.18); color:#fff; }
   .panel { animation: rise .3s ease both; }
   @keyframes rise { from { opacity:0; transform: translateY(4px);} to { opacity:1; transform:none; } }
 
@@ -186,14 +184,14 @@
         </span>
         <span class="font-display text-[24px] font-semibold tracking-tight">GIS<span class="text-crema">.</span>Coffee</span>
       </a>
-      <p class="hint mt-3 hidden md:block">Freshly brewed maps. Drop in a spatial file to map it, explore its table, and export it. Free, and your files never leave your browser.</p>
+      <p class="hint mt-3 hidden md:block">Convert spatial files, make maps, and view attribute tables. Free, and your files stay in your browser.</p>
     </header>
 
-    <nav class="px-5 md:px-8" aria-label="Steps">
+    <nav class="px-5 md:px-8" aria-label="Tools">
       <div class="flex gap-1 p-1 rounded-full bg-milk" role="tablist">
-        <button class="tab active" data-tab="data" role="tab"><span class="n">1</span>Data</button>
-        <button class="tab" data-tab="style" role="tab"><span class="n">2</span>Style</button>
-        <button class="tab" data-tab="table" role="tab"><span class="n">3</span>Table</button>
+        <button class="tab active" data-tab="data" role="tab">Convert formats</button>
+        <button class="tab" data-tab="style" role="tab">Make a map</button>
+        <button class="tab" data-tab="table" role="tab">View attributes</button>
       </div>
     </nav>
 
@@ -202,8 +200,8 @@
       <!-- ============ 1. DATA ============ -->
       <section id="panel-data" class="panel space-y-8" role="tabpanel">
         <div>
-          <h2 class="text-[22px] font-semibold tracking-tight">Add your data</h2>
-          <p class="hint mt-1">Your file is converted to GeoJSON and drawn on the map.</p>
+          <h2 class="text-[22px] font-semibold tracking-tight">Convert file formats</h2>
+          <p class="hint mt-1">Open a spatial file to map it, inspect its attributes, or export it in another format.</p>
         </div>
 
         <label id="dropzone" class="drop" tabindex="0">
@@ -337,16 +335,15 @@
       <section id="panel-table" class="panel hidden space-y-8" role="tabpanel">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h2 class="text-[22px] font-semibold tracking-tight">Explore the table</h2>
+            <h2 class="text-[22px] font-semibold tracking-tight">Attribute table</h2>
             <p class="hint mt-1">Click a row to zoom to it. Double-click a cell to edit it.</p>
           </div>
           <button id="widenBtn" class="btn btn-outline !h-9 !px-4 hidden md:inline-flex shrink-0" title="Make the panel wider">Expand</button>
         </div>
 
         <div id="tableEmpty" class="rounded-3xl bg-milk/70 px-6 py-12 text-center">
-          <div class="text-4xl">☕</div>
-          <p class="text-[16px] font-semibold mt-3">Nothing brewing yet</p>
-          <p class="hint mt-1">Add a file in step 1 to see its attributes here.</p>
+          <p class="text-[16px] font-semibold mt-3">No table to show</p>
+          <p class="hint mt-1">Open a spatial file to view its attributes here.</p>
           <button class="btn btn-primary mt-6" data-goto="data">Add data</button>
         </div>
 
@@ -380,8 +377,8 @@
     </main>
 
     <footer class="hidden md:flex px-8 py-4 border-t border-line items-center justify-between text-[12px] text-mocha">
-      <span>🔒 Runs entirely in your browser</span>
-      <span>Brewed in Minnesota</span>
+      <span>Runs entirely in your browser</span>
+      <span>GIS.Coffee</span>
     </footer>
   </aside>
 
@@ -412,9 +409,8 @@
     <!-- Welcome -->
     <div id="welcome" class="absolute inset-0 z-10 grid place-items-center p-6 pointer-events-none">
       <div class="pointer-events-auto max-w-[440px] w-full rounded-3xl bg-white/95 backdrop-blur px-10 py-10 text-center shadow-[0_2px_6px_rgba(42,27,20,.06),0_24px_60px_rgba(42,27,20,.14)]">
-        <div class="text-4xl">☕</div>
-        <h1 class="font-display text-[28px] font-semibold leading-tight mt-3">Put your data on the map</h1>
-        <p class="hint mt-2 text-[14px]">Drop a Shapefile, KML, GeoJSON, CSV or GeoPackage anywhere on this page.</p>
+        <h1 class="font-display text-[28px] font-semibold leading-tight">Convert files. Make maps. View attribute tables.</h1>
+        <p class="hint mt-3 text-[14px]">Work with spatial data in your browser. Your files stay on your device.</p>
         <div class="flex flex-wrap justify-center gap-2 mt-7">
           <button id="welcomeUpload" class="btn btn-primary">Upload a file</button>
           <button id="welcomeSample" class="btn btn-outline">Try sample data</button>
@@ -427,7 +423,7 @@
     <div id="loading" class="hidden absolute inset-0 z-40 bg-foam/70 backdrop-blur-sm grid place-items-center">
       <div class="flex flex-col items-center gap-4 rounded-3xl bg-white px-10 py-8 shadow-xl">
         <div class="flex items-start"><div class="cup"><i></i></div><div class="cup-h"></div></div>
-        <div id="loadingMsg" class="text-[14px] font-medium">Brewing…</div>
+        <div id="loadingMsg" class="text-[14px] font-medium">Loading file…</div>
       </div>
     </div>
   </section>
@@ -436,7 +432,7 @@
 <div id="dropVeil" class="hidden fixed inset-0 z-50 bg-foam/90 backdrop-blur-sm grid place-items-center pointer-events-none">
   <div class="border-2 border-dashed border-caramel rounded-[32px] px-16 py-14 text-center bg-white">
     <div class="text-5xl">☕</div>
-    <div class="font-display text-[26px] font-semibold mt-3">Drop to start brewing</div>
+    <div class="font-display text-[26px] font-semibold mt-3">Drop a file to import</div>
     <div class="hint mt-1">Shapefile (.zip) · KML/KMZ · GeoJSON · CSV · GeoPackage</div>
   </div>
 </div>
@@ -981,7 +977,7 @@ async function handleFiles(list) {
   if (files.length > 1) toast('Loading the first file only.', 'warn', 2500);
   const file = files[0];
   clearError();
-  busy(true, `Brewing ${trunc(file.name, 34)}…`);
+  busy(true, `Loading ${trunc(file.name, 34)}…`);
   await new Promise(r => setTimeout(r, 30));
   try {
     const { fc, format } = await parseFile(file);
