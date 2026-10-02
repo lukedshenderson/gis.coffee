@@ -8,6 +8,7 @@
 <meta property="og:title" content="GIS.Coffee · Spatial data tools" />
 <meta property="og:description" content="Convert spatial files, make maps, and view attribute tables in your browser." />
 <meta name="theme-color" content="#fbf7f2" />
+<meta name="mapbox-access-token" content="" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -39,7 +40,7 @@
   };
 </script>
 
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mapbox-gl@3/dist/mapbox-gl.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@6/dist/css/tabulator.min.css" />
 
 <style>
@@ -96,10 +97,10 @@
   .bm:hover { border-color:#c9b8a6; }
   .bm.sel { border-color: var(--caramel); box-shadow: 0 0 0 3px rgba(138,79,36,.14); }
   .bm .pv { height:56px; }
-  .pv-light { background: linear-gradient(160deg, transparent 44%, #d9d9d6 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, #e4e4e0 61% 62%, transparent 63%), radial-gradient(40% 60% at 90% 90%, #d2dadd, transparent), #f4f4f1; }
-  .pv-dark { background: linear-gradient(160deg, transparent 44%, rgba(255,255,255,.18) 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, rgba(255,255,255,.08) 61% 62%, transparent 63%), #1f2228; }
-  .pv-voyager { background: linear-gradient(160deg, transparent 44%, #f5c26b 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, #fff 61% 63%, transparent 64%), radial-gradient(40% 60% at 90% 90%, #b8d6e6, transparent), #f2eee5; }
-  .pv-osm { background: linear-gradient(160deg, transparent 44%, #e892a2 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, #fcd6a4 61% 63%, transparent 64%), radial-gradient(40% 60% at 90% 90%, #aad3df, transparent), radial-gradient(30% 40% at 15% 20%, #c8facc, transparent), #f2efe9; }
+  .pv-day { background: linear-gradient(160deg, transparent 44%, #d9d9d6 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, #e4e4e0 61% 62%, transparent 63%), radial-gradient(40% 60% at 90% 90%, #d2dadd, transparent), #f4f4f1; }
+  .pv-night { background: linear-gradient(160deg, transparent 44%, rgba(255,255,255,.18) 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, rgba(255,255,255,.08) 61% 62%, transparent 63%), #1f2228; }
+  .pv-dawn { background: linear-gradient(160deg, transparent 44%, #f5c26b 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, #fff 61% 63%, transparent 64%), radial-gradient(40% 60% at 90% 90%, #b8d6e6, transparent), #f2eee5; }
+  .pv-dusk { background: linear-gradient(160deg, transparent 44%, #e892a2 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, #fcd6a4 61% 63%, transparent 64%), radial-gradient(40% 60% at 90% 90%, #aad3df, transparent), radial-gradient(30% 40% at 15% 20%, #c8facc, transparent), #f2efe9; }
 
   /* Color swatches & sliders */
   .sw { width:32px; height:32px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 0 1px var(--line); transition: transform .12s, box-shadow .12s; }
@@ -135,12 +136,12 @@
   .cup-h { width:13px; height:18px; border:3px solid var(--caramel); border-left:none; border-radius: 0 10px 10px 0; margin-left:-3px; margin-top:6px; }
   @keyframes fill { 0% { height:0; } 70% { height:85%; opacity:1; } 100% { height:85%; opacity:0; } }
 
-  /* MapLibre */
-  .maplibregl-ctrl-group { border-radius:12px !important; box-shadow: 0 1px 3px rgba(42,27,20,.12), 0 4px 12px rgba(42,27,20,.08) !important; overflow:hidden; }
-  .maplibregl-ctrl-scale { background: rgba(255,255,255,.85); color: var(--roast); border-color: var(--roast); font-size: 11px; }
-  .maplibregl-popup-content { border-radius: 16px; padding: 0; box-shadow: 0 8px 30px rgba(42,27,20,.18); font-family: Inter, sans-serif; color: var(--espresso); overflow:hidden; }
-  .maplibregl-popup-close-button { font-size: 20px; width: 28px; height: 28px; right: 6px; top: 6px; border-radius: 99px; color: var(--mocha); }
-  .maplibregl-popup-close-button:hover { background: var(--milk); }
+  /* Mapbox GL JS */
+  .mapboxgl-ctrl-group { border-radius:12px !important; box-shadow: 0 1px 3px rgba(42,27,20,.12), 0 4px 12px rgba(42,27,20,.08) !important; overflow:hidden; }
+  .mapboxgl-ctrl-scale { background: rgba(255,255,255,.85); color: var(--roast); border-color: var(--roast); font-size: 11px; }
+  .mapboxgl-popup-content { border-radius: 16px; padding: 0; box-shadow: 0 8px 30px rgba(42,27,20,.18); font-family: Inter, sans-serif; color: var(--espresso); overflow:hidden; }
+  .mapboxgl-popup-close-button { font-size: 20px; width: 28px; height: 28px; right: 6px; top: 6px; border-radius: 99px; color: var(--mocha); }
+  .mapboxgl-popup-close-button:hover { background: var(--milk); }
   .pop-row { display:grid; grid-template-columns: 40% 60%; gap:10px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; }
   .pop-row .k { color: var(--mocha); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .pop-row .v { word-break: break-word; }
@@ -279,10 +280,10 @@
         <div>
           <div class="label mb-3">Basemap</div>
           <div class="grid grid-cols-2 gap-3">
-            <button class="bm sel" data-basemap="light"><div class="pv pv-light"></div><div class="px-3 py-2.5 text-[13px] font-semibold">Light</div></button>
-            <button class="bm" data-basemap="voyager"><div class="pv pv-voyager"></div><div class="px-3 py-2.5 text-[13px] font-semibold">Streets</div></button>
-            <button class="bm" data-basemap="dark"><div class="pv pv-dark"></div><div class="px-3 py-2.5 text-[13px] font-semibold">Dark</div></button>
-            <button class="bm" data-basemap="osm"><div class="pv pv-osm"></div><div class="px-3 py-2.5 text-[13px] font-semibold">OpenStreetMap</div></button>
+            <button class="bm sel" data-basemap="day"><div class="pv pv-day"></div><div class="px-3 py-2.5 text-[13px] font-semibold">Day</div></button>
+            <button class="bm" data-basemap="dawn"><div class="pv pv-dawn"></div><div class="px-3 py-2.5 text-[13px] font-semibold">Dawn</div></button>
+            <button class="bm" data-basemap="dusk"><div class="pv pv-dusk"></div><div class="px-3 py-2.5 text-[13px] font-semibold">Dusk</div></button>
+            <button class="bm" data-basemap="night"><div class="pv pv-night"></div><div class="px-3 py-2.5 text-[13px] font-semibold">Night</div></button>
           </div>
         </div>
 
@@ -385,6 +386,7 @@
   <!-- ============================== MAP ============================== -->
   <section id="mapWrap" class="relative flex-1 min-h-0 bg-foam">
     <div id="map" class="absolute inset-0"></div>
+    <div id="mapboxNotice" class="hidden absolute top-5 left-5 z-20 max-w-[min(360px,calc(100%-40px))] rounded-xl bg-white px-4 py-3 text-[13px] leading-snug text-espresso shadow-lg" role="status"></div>
 
     <div id="titleCard" class="hidden absolute top-5 left-5 z-10 max-w-[min(520px,70%)] rounded-2xl bg-white/95 backdrop-blur pl-7 pr-6 py-5 shadow-[0_2px_6px_rgba(42,27,20,.08),0_12px_32px_rgba(42,27,20,.12)] pointer-events-none overflow-hidden">
       <div data-print="swatch" class="absolute left-0 top-0 bottom-0 w-[5px] bg-crema"></div>
@@ -438,7 +440,7 @@
 </div>
 
 <!-- Libraries -->
-<script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mapbox-gl@3/dist/mapbox-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@6/dist/js/tabulator.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
@@ -470,7 +472,7 @@ const FORMAT_NAMES = { shp: 'Shapefile', kml: 'KML', kmz: 'KMZ', geojson: 'GeoJS
 
 const state = {
   data: null, name: '', format: '',
-  basemap: 'light', style: { color: '#b8662a', opacity: 0.85, width: 2, radius: 6 },
+  basemap: 'day', style: { color: '#b8662a', opacity: 0.85, width: 2, radius: 6 },
   table: null, tableDirty: true, chart: null, chartDirty: true, edits: 0,
   hlAnim: null, popup: null, tab: 'data', legend: true, serif: true
 };
@@ -513,32 +515,40 @@ function showFormatError(format, detail) {
 const clearError = () => $('#errorBox').classList.add('hidden');
 
 /* -------------------------------- Map -------------------------------- */
-const OSM_STYLE = {
-  version: 8,
-  sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, maxzoom: 19,
-    attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors' } },
-  layers: [{ id: 'osm', type: 'raster', source: 'osm' }]
-};
+const MAPBOX_ACCESS_TOKEN = $('meta[name="mapbox-access-token"]').content.trim();
+mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
+const EMPTY_MAP_STYLE = { version: 8, sources: {}, layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#f4f4f1' } }] };
 const BASEMAPS = {
-  light:   { name: 'Light',         style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' },
-  voyager: { name: 'Streets',       style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json' },
-  dark:    { name: 'Dark',          style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json' },
-  osm:     { name: 'OpenStreetMap', style: OSM_STYLE }
+  day: { lightPreset: 'day' },
+  dawn: { lightPreset: 'dawn' },
+  dusk: { lightPreset: 'dusk' },
+  night: { lightPreset: 'night' }
 };
+function showMapboxNotice(message) {
+  const notice = $('#mapboxNotice');
+  notice.textContent = message;
+  notice.classList.remove('hidden');
+}
 
-const map = new maplibregl.Map({
+const map = new mapboxgl.Map({
   container: 'map',
-  style: BASEMAPS.light.style,
+  style: MAPBOX_ACCESS_TOKEN ? 'mapbox://styles/mapbox/standard' : EMPTY_MAP_STYLE,
+  config: MAPBOX_ACCESS_TOKEN ? { basemap: { lightPreset: 'day' } } : undefined,
   center: [-93.6, 44.98],
   zoom: 7.2,
   attributionControl: { compact: true },
   preserveDrawingBuffer: true,
   canvasContextAttributes: { antialias: true, preserveDrawingBuffer: true }
 });
-map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
-map.addControl(new maplibregl.FullscreenControl({ container: $('#mapWrap') }), 'top-right');
-map.addControl(new maplibregl.ScaleControl({ maxWidth: 110, unit: 'imperial' }), 'bottom-right');
-map.on('error', e => console.warn('[map]', e && e.error ? e.error.message : e));
+map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
+map.addControl(new mapboxgl.FullscreenControl({ container: $('#mapWrap') }), 'top-right');
+map.addControl(new mapboxgl.ScaleControl({ maxWidth: 110, unit: 'imperial' }), 'bottom-right');
+map.on('error', e => {
+  const error = e && e.error;
+  if (error && (error.status === 401 || error.status === 403)) showMapboxNotice('Mapbox rejected this token. Check the public token and its allowed URLs.');
+  console.warn('[map]', error ? error.message : e);
+});
+if (!MAPBOX_ACCESS_TOKEN) showMapboxNotice('Add a Mapbox public access token in the mapbox-access-token setting to load Standard basemaps.');
 
 const POLY  = ['match', ['geometry-type'], ['Polygon', 'MultiPolygon'], true, false];
 const LINEY = ['match', ['geometry-type'], ['Polygon', 'MultiPolygon', 'LineString', 'MultiLineString'], true, false];
@@ -559,7 +569,7 @@ map.on('style.load', () => { addDataLayers(); applyStyle(); });
 
 function applyStyle() {
   const s = state.style;
-  const outline = state.basemap === 'dark' ? '#1b1310' : '#ffffff';
+  const outline = state.basemap === 'night' ? '#1b1310' : '#ffffff';
   if (map.getLayer('lyr-fill')) {
     map.setPaintProperty('lyr-fill', 'fill-color', s.color);
     map.setPaintProperty('lyr-fill', 'fill-opacity', s.opacity * 0.5);
@@ -571,7 +581,7 @@ function applyStyle() {
     map.setPaintProperty('lyr-point', 'circle-opacity', s.opacity);
     map.setPaintProperty('lyr-point', 'circle-stroke-color', outline);
     map.setPaintProperty('lyr-point', 'circle-stroke-opacity', Math.min(1, s.opacity + 0.15));
-    const hl = state.basemap === 'dark' ? '#fff6e8' : '#2a1b14';
+    const hl = state.basemap === 'night' ? '#fff6e8' : '#2a1b14';
     map.setPaintProperty('hl-fill', 'fill-color', hl);
     map.setPaintProperty('hl-line', 'line-color', hl);
     map.setPaintProperty('hl-point', 'circle-stroke-color', hl);
@@ -581,9 +591,15 @@ function applyStyle() {
 
 function setBasemap(key) {
   if (!BASEMAPS[key] || key === state.basemap) return;
+  if (!MAPBOX_ACCESS_TOKEN) {
+    showMapboxNotice('Add a Mapbox public access token in the mapbox-access-token setting to load Standard basemaps.');
+    return;
+  }
   state.basemap = key;
-  map.setStyle(BASEMAPS[key].style, { diff: false });   // data layers are re-added on style.load
+  const setPreset = () => map.setConfigProperty('basemap', 'lightPreset', BASEMAPS[key].lightPreset);
+  if (map.isStyleLoaded()) setPreset(); else map.once('style.load', setPreset);
   $$('.bm').forEach(o => o.classList.toggle('sel', o.dataset.basemap === key));
+  applyStyle();
 }
 
 const liveHit = () => HIT.filter(l => map.getLayer(l));
@@ -625,7 +641,7 @@ function openPopup(f, lngLat) {
       <div class="scroll-soft" style="margin-top:12px;max-height:230px;overflow-y:auto">${rows || '<div style="font-size:13px;color:#6e5b4e">No attributes</div>'}${more}</div>
     </div>`;
   if (state.popup) state.popup.remove();
-  state.popup = new maplibregl.Popup({ maxWidth: '340px', offset: 12 }).setLngLat(lngLat).setHTML(html).addTo(map);
+  state.popup = new mapboxgl.Popup({ maxWidth: '340px', offset: 12 }).setLngLat(lngLat).setHTML(html).addTo(map);
 }
 
 function highlight(f) {
@@ -1308,7 +1324,7 @@ function compose(mapCanvas) {
   ctx.drawImage(mapCanvas, 0, 0);
   drawCard(ctx, $('#titleCard'), base, r);
   drawCard(ctx, $('#legend'), base, r);
-  const credit = (state.basemap === 'osm' ? '© OpenStreetMap contributors' : '© OpenStreetMap contributors © CARTO') + '  ·  Made with GIS.Coffee';
+  const credit = '© Mapbox © OpenStreetMap  ·  Made with GIS.Coffee';
   ctx.font = `500 ${11 * r}px Inter, sans-serif`;
   const tw = ctx.measureText(credit).width, pad = 9 * r, ph = 22 * r, px = W - tw - pad * 2 - 12 * r, py = H - ph - 12 * r;
   rr(ctx, px, py, tw + pad * 2, ph, 11 * r); ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fill();
