@@ -7,32 +7,32 @@
 <meta name="description" content="Convert spatial file formats, make maps, and view attribute tables in your browser. Free, and your files never leave your device." />
 <meta property="og:title" content="GIS.Coffee · Spatial data tools" />
 <meta property="og:description" content="Convert spatial files, make maps, and view attribute tables in your browser." />
-<meta name="theme-color" content="#fbf7f2" />
+<meta name="theme-color" content="#f7fbfd" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
     theme: { extend: {
       colors: {
-        espresso: '#2a1b14',   // primary text
-        roast:    '#5c4033',   // secondary text
-        mocha:    '#6e5b4e',   // muted text
-        caramel:  '#8a4f24',   // primary action
-        crema:    '#c98a4b',   // accent
-        foam:     '#fbf7f2',   // app background
-        milk:     '#f5ede4',   // soft surface
-        line:     '#ebe1d6',   // hairlines
-        berry:    '#b3261e',
-        matcha:   '#3f7d3a'
+        espresso: '#15232c',
+        roast:    '#36515e',
+        mocha:    '#5b6d77',
+        caramel:  '#007f9e',
+        crema:    '#8d45cf',
+        foam:     '#f7fbfd',
+        milk:     '#e8f7fb',
+        line:     '#d8e6eb',
+        berry:    '#ed5660',
+        matcha:   '#168a55'
       },
       fontFamily: {
         display: ['Fraunces', 'Georgia', 'serif'],
-        sans: ['Inter', 'system-ui', 'Segoe UI', 'sans-serif'],
+        sans: ['Outfit', 'Inter', 'system-ui', 'Segoe UI', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace']
       }
     } }
@@ -43,58 +43,70 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@6/dist/css/tabulator.min.css" />
 
 <style>
-  :root { --espresso:#2a1b14; --roast:#5c4033; --mocha:#6e5b4e; --caramel:#8a4f24; --crema:#c98a4b; --foam:#fbf7f2; --milk:#f5ede4; --line:#ebe1d6; }
+  :root { color-scheme:light; --espresso:#15232c; --roast:#36515e; --mocha:#5b6d77; --caramel:#007f9e; --crema:#8d45cf; --foam:#f7fbfd; --milk:#e8f7fb; --line:#d8e6eb; --surface:#ffffff; --surface-raised:#f8fbfc; --cyan:#0086a6; --sky:#31c6ef; --sun:#ffdf4f; --lime:#168a55; }
   html, body { background: var(--foam); color: var(--espresso); }
-  ::selection { background: rgba(201,138,75,.28); }
-  :focus-visible { outline: 2px solid var(--caramel); outline-offset: 2px; }
+  ::selection { background: rgba(49,198,239,.24); }
+  :focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 
-  .scroll-soft { scrollbar-width: thin; scrollbar-color: #e0d3c5 transparent; }
+  .scroll-soft { scrollbar-width: thin; scrollbar-color: #c3d2d9 transparent; }
   .scroll-soft::-webkit-scrollbar, .tabulator-tableholder::-webkit-scrollbar { width: 10px; height: 10px; }
-  .scroll-soft::-webkit-scrollbar-thumb, .tabulator-tableholder::-webkit-scrollbar-thumb { background: #e0d3c5; border-radius: 99px; border: 3px solid #fff; }
+  .scroll-soft::-webkit-scrollbar-thumb, .tabulator-tableholder::-webkit-scrollbar-thumb { background: #c3d2d9; border-radius: 99px; border: 3px solid var(--surface); }
+
+  .bg-white { background-color: var(--surface) !important; }
+  .bg-white\/95 { background-color: rgb(255 255 255 / .96) !important; }
+  .bg-white\/90 { background-color: rgb(255 255 255 / .92) !important; }
+  .bg-white\/60 { background-color: rgb(35 51 61 / .06) !important; }
+  .bg-foam\/70 { background-color: rgb(244 248 250 / .78) !important; }
+  .bg-foam\/90 { background-color: rgb(244 248 250 / .94) !important; }
+  #sidebar { background-color: var(--surface) !important; }
+  #sidebar header { border-bottom: 1px solid var(--line); }
+  #sidebar footer { background: var(--surface); }
+  #sidebar > header a > span:first-child { border: 1px solid var(--line); }
+  #sidebar > header a > span:last-child { font-family: 'JetBrains Mono', monospace; }
 
   #sidebar { transition: width .3s cubic-bezier(.2,.8,.2,1); }
   @media (min-width: 768px) { #sidebar.wide { width: min(860px, 62vw) !important; } }
 
   /* Tabs */
-  .tab { flex:1; display:flex; align-items:center; justify-content:center; gap:8px; height:40px; border-radius:999px; font-size:14px; font-weight:600; color: var(--mocha); transition: background .15s, color .15s; }
-  .tab:hover { color: var(--espresso); background: rgba(245,237,228,.7); }
-  .tab.active { background: var(--espresso); color: #fff; }
+  .tab { flex:1; display:flex; align-items:center; justify-content:center; gap:8px; height:40px; border-radius:10px; font-family:Outfit,Inter,sans-serif; font-size:12px; font-weight:700; color: var(--roast); transition: background .15s, color .15s; }
+  .tab:hover { color: var(--espresso); background: rgba(49,198,239,.12); }
+  .tab.active { background: var(--caramel); color: #fff; box-shadow:0 2px 6px rgba(21,35,44,.18); }
   .panel { animation: rise .3s ease both; }
   @keyframes rise { from { opacity:0; transform: translateY(4px);} to { opacity:1; transform:none; } }
 
   /* Typography helpers */
-  .label { font-size: 13px; font-weight: 600; color: var(--espresso); }
+  .label { font-family:'JetBrains Mono',monospace; font-size: 11px; font-weight: 600; color: var(--roast); }
   .hint  { font-size: 13px; color: var(--mocha); line-height: 1.5; }
 
   /* Controls */
-  .field { width:100%; height:44px; background:#fff; border:1px solid #dccfc1; border-radius:12px; padding:0 14px; font-size:14px; color: var(--espresso); outline:none; transition: border-color .15s, box-shadow .15s; }
-  .field:hover { border-color: #c9b8a6; }
-  .field:focus { border-color: var(--caramel); box-shadow: 0 0 0 3px rgba(138,79,36,.14); }
-  .field::placeholder { color: #a8978a; }
+  .field { width:100%; height:44px; background:#fff; border:1px solid #cbd8de; border-radius:10px; padding:0 14px; font-size:14px; color: var(--espresso); outline:none; transition: border-color .15s, box-shadow .15s; }
+  .field:hover { border-color: #9eb6c2; }
+  .field:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(0,134,166,.16); }
+  .field::placeholder { color: #5b6d77; }
   select.field { appearance:none; -webkit-appearance:none; padding-right:36px; cursor:pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236e5b4e' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2349616e' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
     background-repeat:no-repeat; background-position: right 14px center; }
-  .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:44px; padding:0 20px; border-radius:999px; font-size:14px; font-weight:600; transition: background .15s, box-shadow .15s, border-color .15s, color .15s; white-space:nowrap; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:44px; padding:0 20px; border-radius:8px; font-size:14px; font-weight:600; transition: background .15s, box-shadow .15s, border-color .15s, color .15s; white-space:nowrap; }
   .btn-primary { background: var(--caramel); color:#fff; }
-  .btn-primary:hover:not(:disabled) { background:#74411c; box-shadow: 0 4px 14px -6px rgba(138,79,36,.7); }
-  .btn-outline { background:#fff; color: var(--caramel); border:1px solid #dccfc1; }
-  .btn-outline:hover:not(:disabled) { background: var(--milk); border-color: #c9b8a6; }
-  .btn-text { height:36px; padding:0 12px; color: var(--caramel); }
-  .btn-text:hover:not(:disabled) { background: var(--milk); }
-  .btn:disabled { opacity:.45; cursor:not-allowed; }
+  .btn-primary:hover:not(:disabled) { background:#006782; box-shadow: 0 4px 14px -6px rgba(0,127,158,.5); }
+  .btn-outline { background:var(--surface); color: var(--espresso); border:1px solid #cbd8de; }
+  .btn-outline:hover:not(:disabled) { background:#eff8fa; border-color: var(--cyan); }
+  .btn-text { height:36px; padding:0 12px; color: #006c86; }
+  .btn-text:hover:not(:disabled) { background: rgba(49,198,239,.12); }
+  .btn:disabled { opacity:.7; cursor:not-allowed; }
 
   /* Drop zone */
-  .drop { display:block; width:100%; border:2px dashed #d9c6b2; border-radius:24px; padding:40px 24px; text-align:center; background:#fff; cursor:pointer; transition: border-color .2s, background .2s; }
+  .drop { display:block; width:100%; border:1px dashed #006c86; border-radius:14px; padding:40px 24px; text-align:center; background:var(--sky); color:var(--espresso); cursor:pointer; transition: border-color .2s, background .2s; }
   .drop.compact { padding:20px 24px; }
   .drop.compact .full { display:none; }
   .drop.compact .replace { display:block !important; }
-  .drop:hover, .drop.on { border-color: var(--caramel); background: #fffaf4; }
-  .pill { font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 3px 9px; border-radius: 99px; background: var(--milk); color: var(--roast); }
+  .drop:hover, .drop.on { border-color: #004e63; background: #62d5f2; }
+  .pill { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 3px 9px; border-radius: 5px; background: #e6f2f5; color: var(--roast); }
 
   /* Basemap cards */
-  .bm { cursor:pointer; border-radius:14px; border:1.5px solid var(--line); overflow:hidden; background:#fff; text-align:left; transition: border-color .15s, box-shadow .15s; }
-  .bm:hover { border-color:#c9b8a6; }
-  .bm.sel { border-color: var(--caramel); box-shadow: 0 0 0 3px rgba(138,79,36,.14); }
+  .bm { cursor:pointer; border-radius:8px; border:1px solid var(--line); overflow:hidden; background:var(--surface-raised); text-align:left; transition: border-color .15s, box-shadow .15s; }
+  .bm:hover { border-color:#91bac6; }
+  .bm.sel { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(0,134,166,.16); }
   .bm .pv { height:56px; }
   .pv-street { background: linear-gradient(160deg, transparent 44%, #d9d9d6 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, #e4e4e0 61% 62%, transparent 63%), radial-gradient(40% 60% at 90% 90%, #d2dadd, transparent), #f4f4f1; }
   .pv-dark { background: linear-gradient(160deg, transparent 44%, rgba(255,255,255,.18) 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, rgba(255,255,255,.08) 61% 62%, transparent 63%), #1f2228; }
@@ -102,19 +114,19 @@
   .pv-imagery { background: linear-gradient(160deg, transparent 44%, #e892a2 45% 47%, transparent 48%), linear-gradient(60deg, transparent 60%, #fcd6a4 61% 63%, transparent 64%), radial-gradient(40% 60% at 90% 90%, #aad3df, transparent), radial-gradient(30% 40% at 15% 20%, #c8facc, transparent), #f2efe9; }
 
   /* Color swatches & sliders */
-  .sw { width:32px; height:32px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 0 1px var(--line); transition: transform .12s, box-shadow .12s; }
+  .sw { width:32px; height:32px; border-radius:50%; border:2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); transition: transform .12s, box-shadow .12s; }
   .sw:hover { transform: scale(1.08); }
   .sw.sel { box-shadow: 0 0 0 2px var(--espresso); }
   input[type=color] { -webkit-appearance:none; appearance:none; border:none; width:32px; height:32px; border-radius:50%; padding:0; background:none; cursor:pointer; }
   input[type=color]::-webkit-color-swatch-wrapper { padding:0; }
-  input[type=color]::-webkit-color-swatch { border: 1px solid #c9b8a6; border-radius:50%; }
-  input[type=color]::-moz-color-swatch { border: 1px solid #c9b8a6; border-radius:50%; }
-  input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:4px; border-radius:99px; background: linear-gradient(90deg, var(--caramel) var(--p,50%), #e6dacd var(--p,50%)); outline:none; }
-  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background: var(--caramel); border:3px solid #fff; box-shadow: 0 1px 4px rgba(42,27,20,.35); cursor:pointer; }
+  input[type=color]::-webkit-color-swatch { border: 1px solid #aebfc7; border-radius:50%; }
+  input[type=color]::-moz-color-swatch { border: 1px solid #aebfc7; border-radius:50%; }
+  input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:5px; border-radius:99px; background: linear-gradient(90deg, var(--cyan) var(--p,50%), #d8e4e8 var(--p,50%)); outline:none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background: var(--caramel); border:3px solid #fff; box-shadow: 0 1px 4px rgba(35,51,61,.3); cursor:pointer; }
   input[type=range]::-moz-range-thumb { width:14px; height:14px; border-radius:50%; background: var(--caramel); border:3px solid #fff; cursor:pointer; }
 
-  .switch { width:36px; height:20px; border-radius:99px; background:#d9ccbe; position:relative; transition: background .2s; flex-shrink:0; }
-  .switch::after { content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:99px; background:#fff; transition: left .2s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+  .switch { width:36px; height:20px; border-radius:99px; background:#b6c5cb; position:relative; transition: background .2s; flex-shrink:0; }
+  .switch::after { content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:99px; background:#fff; transition: left .2s; box-shadow: 0 1px 2px rgba(35,51,61,.2); }
   .on > .switch { background: var(--caramel); }
   .on > .switch::after { left:18px; }
 
@@ -122,7 +134,7 @@
   details > summary::-webkit-details-marker { display:none; }
   details[open] .chev { transform: rotate(180deg); }
 
-  .stat { background: var(--milk); border-radius:16px; padding:14px 16px; }
+  .stat { background: var(--milk); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
   .stat .v { font-size:22px; font-weight:600; color: var(--espresso); line-height:1.1; }
   .stat .k { font-size:12px; color: var(--mocha); margin-top:4px; }
 
@@ -130,61 +142,125 @@
   .toast.show { opacity:1; transform:none; }
 
   /* Loading cup */
-  .cup { width:48px; height:40px; border:3px solid var(--caramel); border-top:none; border-radius: 0 0 16px 16px; position:relative; overflow:hidden; }
-  .cup i { position:absolute; left:0; right:0; bottom:0; height:0; background: linear-gradient(#e9c9a0 0 22%, #8a4f24 22%); animation: fill 1.6s ease-in-out infinite; }
+  .cup { width:48px; height:40px; border:3px solid var(--cyan); border-top:none; border-radius: 0 0 12px 12px; position:relative; overflow:hidden; }
+  .cup i { position:absolute; left:0; right:0; bottom:0; height:0; background: linear-gradient(var(--crema) 0 22%, var(--caramel) 22%); animation: fill 1.6s ease-in-out infinite; }
   .cup-h { width:13px; height:18px; border:3px solid var(--caramel); border-left:none; border-radius: 0 10px 10px 0; margin-left:-3px; margin-top:6px; }
   @keyframes fill { 0% { height:0; } 70% { height:85%; opacity:1; } 100% { height:85%; opacity:0; } }
 
   /* MapLibre GL JS */
-  .maplibregl-ctrl-group { border-radius:12px !important; box-shadow: 0 1px 3px rgba(42,27,20,.12), 0 4px 12px rgba(42,27,20,.08) !important; overflow:hidden; }
-  .maplibregl-ctrl-scale { background: rgba(255,255,255,.85); color: var(--roast); border-color: var(--roast); font-size: 11px; }
-  .maplibregl-popup-content { border-radius: 16px; padding: 0; box-shadow: 0 8px 30px rgba(42,27,20,.18); font-family: Inter, sans-serif; color: var(--espresso); overflow:hidden; }
-  .maplibregl-popup-close-button { font-size: 20px; width: 28px; height: 28px; right: 6px; top: 6px; border-radius: 99px; color: var(--mocha); }
-  .maplibregl-popup-close-button:hover { background: var(--milk); }
+  .maplibregl-ctrl-group { border:1px solid var(--line) !important; border-radius:10px !important; background:var(--surface) !important; box-shadow: 0 5px 16px rgba(35,51,61,.15) !important; overflow:hidden; }
+  .maplibregl-ctrl-group button { background-color:var(--surface) !important; }
+  .maplibregl-ctrl-group button + button { border-top:1px solid var(--line) !important; }
+  .maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter:none; }
+  .maplibregl-ctrl-scale { background: rgba(255,255,255,.94); color: var(--roast); border-color: var(--roast); font-size: 11px; }
+  .maplibregl-ctrl-attrib { background:rgba(255,255,255,.92) !important; color:var(--roast) !important; }
+  .maplibregl-ctrl-attrib a { color:#0086a6 !important; }
+  .maplibregl-popup-content { border:1px solid var(--line); border-radius: 10px; padding: 0; background:var(--surface); box-shadow: 0 12px 36px rgba(35,51,61,.2); font-family: Inter, sans-serif; color: var(--espresso); overflow:hidden; }
+  .maplibregl-popup-tip { border-top-color:var(--surface-raised); border-bottom-color:var(--surface-raised); border-left-color:var(--surface-raised); border-right-color:var(--surface-raised); }
+  .maplibregl-popup-close-button { font-size: 20px; width: 28px; height: 28px; right: 6px; top: 6px; border-radius: 4px; color: var(--roast); }
+  .maplibregl-popup-close-button:hover { background: rgba(49,198,239,.16); color:var(--cyan); }
   .pop-row { display:grid; grid-template-columns: 40% 60%; gap:10px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; }
   .pop-row .k { color: var(--mocha); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .pop-row .v { word-break: break-word; }
 
   /* Tabulator */
-  .tabulator { border: 1px solid var(--line); border-radius: 16px; background:#fff; font-family: Inter, sans-serif; font-size: 13px; }
+  .tabulator { border: 1px solid var(--line); border-radius: 10px; background:var(--surface); color:var(--espresso); font-family: Inter, sans-serif; font-size: 13px; }
   .tabulator .tabulator-header { background: var(--milk); border-bottom: 1px solid var(--line); color: var(--espresso); font-weight: 600; }
   .tabulator .tabulator-header .tabulator-col { background: var(--milk); border-right: 1px solid var(--line); }
-  .tabulator .tabulator-header .tabulator-col input { border:1px solid #dccfc1 !important; border-radius: 8px; padding: 4px 8px !important; font-size: 12px; background:#fff; }
-  .tabulator .tabulator-tableholder { background:#fff; }
-  .tabulator-row { background:#fff; border-bottom: 1px solid #f3ece4; color: var(--espresso); }
-  .tabulator-row.tabulator-row-even { background: #fdfaf6; }
-  .tabulator-row.tabulator-selectable:hover { background: #f7ede2 !important; cursor: pointer; }
-  .tabulator-row.tabulator-selected { background: #f1dfcb !important; box-shadow: inset 3px 0 0 var(--caramel); }
-  .tabulator-row .tabulator-cell { border-right: 1px solid #f3ece4; padding: 8px 10px; }
-  .tabulator-row .tabulator-cell.tabulator-editing { border: 1px solid var(--caramel) !important; }
+  .tabulator .tabulator-header .tabulator-col input { border:1px solid #cbd8de !important; border-radius: 6px; padding: 4px 8px !important; font-size: 12px; background:#fff; color:var(--espresso); }
+  .tabulator .tabulator-header .tabulator-col input::placeholder { color:#5b6d77; opacity:1; }
+  .tabulator .tabulator-tableholder { background:var(--surface); }
+  .tabulator-row { background:var(--surface); border-bottom: 1px solid #e6edf0; color: var(--espresso); }
+  .tabulator-row.tabulator-row-even { background: #f5f9fa; }
+  .tabulator-row.tabulator-selectable:hover { background: #e8f7fa !important; cursor: pointer; }
+  .tabulator-row.tabulator-selected { background: #fff5d5 !important; box-shadow: inset 3px 0 0 var(--caramel); }
+  .tabulator-row .tabulator-cell { border-right: 1px solid #e6edf0; padding: 8px 10px; }
+  .tabulator-row .tabulator-cell.tabulator-editing { border: 1px solid var(--cyan) !important; }
   .tabulator-row .tabulator-cell.flash { animation: flash 1.2s ease; }
   @keyframes flash { 0% { background: rgba(63,125,58,.22); } 100% { background: transparent; } }
   .tabulator .tabulator-footer { background: var(--milk); border-top: 1px solid var(--line); }
   .tabulator-placeholder-contents { color: var(--mocha) !important; font-size: 14px !important; font-weight: 500 !important; }
   .tabulator-row .tabulator-frozen { color: var(--mocha); }
+
+  #welcome > div { background-color:var(--sky) !important; border:1px solid rgba(21,35,44,.12); }
+  #welcome h1 { color:var(--espresso); }
+  #welcome .hint { color:var(--espresso); }
+
+  #appShell { position:relative; }
+  @media (max-width: 767px) {
+    #mapWrap { position:absolute; inset:0; width:100%; height:100%; }
+    #sidebar { position:absolute; top:auto; right:12px; bottom:calc(env(safe-area-inset-bottom) + 12px); left:12px; width:auto !important; height:min(50svh, 500px) !important; max-height:min(50svh, 500px); border:1px solid var(--line) !important; border-radius:18px; box-shadow:0 12px 36px rgba(35,51,61,.2); overflow:hidden; }
+    #sidebar.mobile-collapsed { max-height:none; }
+    #sidebar.mobile-collapsed nav, #sidebar.mobile-collapsed main { display:none; }
+    #sidebar.mobile-collapsed > header { padding-top:8px !important; padding-bottom:8px !important; }
+    #panelToggle svg { transition:transform .2s; }
+    #sidebar.mobile-collapsed #panelToggle svg { transform:rotate(180deg); }
+    #sidebar > header { padding:12px 16px 8px !important; border-bottom:0; }
+    #sidebar > header p { display:none; }
+    #sidebar > header a > span:first-child { width:36px; height:36px; }
+    #sidebar nav { padding:0 12px 4px; }
+    #sidebar nav > div { border-radius:12px; }
+    #sidebar main { min-height:0; padding:12px 16px max(14px, env(safe-area-inset-bottom)); }
+    #sidebar main section { gap:16px; }
+    #sidebar footer { display:none; }
+    #welcome { display:none; }
+    #dropzone { padding:14px 12px; }
+    #dropzone svg { width:26px; height:26px; }
+    #dropzone .full.mt-5 { display:none; }
+    #titleCard { top:calc(env(safe-area-inset-top) + 12px) !important; left:12px !important; max-width:calc(100% - 76px) !important; padding:12px 14px 12px 18px !important; }
+    #titleCard #mapTitle { font-size:16px !important; }
+    #legend { left:12px !important; bottom:calc(min(50svh, 500px) + 28px) !important; max-width:min(250px, calc(100% - 24px)); padding:12px 14px !important; }
+    #map .maplibregl-ctrl-top-right { top:calc(env(safe-area-inset-top) + 10px); right:10px; }
+    #map .maplibregl-ctrl-bottom-right { bottom:calc(min(50svh, 500px) + 64px); right:10px; }
+    .maplibregl-ctrl-attrib.maplibregl-compact-show { max-width:min(240px, calc(100vw - 24px)); font-size:10px; line-height:1.35; white-space:normal; }
+    #toasts { top:calc(env(safe-area-inset-top) + 12px); right:58px; left:12px; max-width:none; }
+    #grid { height:260px !important; }
+    .tabulator .tabulator-cell { padding:6px 7px; }
+  }
+  @media (max-width: 380px) {
+    #sidebar { right:8px; bottom:calc(env(safe-area-inset-bottom) + 8px); left:8px; height:min(58svh, 500px) !important; max-height:min(58svh, 500px); }
+    #sidebar > header { padding-top:6px !important; padding-bottom:4px !important; }
+    #sidebar nav { padding-right:8px; padding-left:8px; }
+    .tab { gap:3px; font-size:11px; }
+    #sidebar main { padding:8px 12px max(10px, env(safe-area-inset-bottom)); }
+    #sidebar main section { gap:12px; }
+    #dropzone { padding:10px; }
+    #legend { bottom:calc(min(58svh, 500px) + 16px) !important; }
+    #map .maplibregl-ctrl-bottom-right { bottom:calc(min(58svh, 500px) + 64px); }
+  }
+  @media (max-width: 767px) and (max-height: 760px) {
+    #sidebar { height:min(58svh, 500px) !important; max-height:min(58svh, 500px); }
+    #legend { bottom:calc(min(58svh, 500px) + 16px) !important; }
+    #map .maplibregl-ctrl-bottom-right { bottom:calc(min(58svh, 500px) + 64px); }
+  }
 </style>
 </head>
 
 <body class="h-full font-sans antialiased overflow-hidden">
 <noscript><p style="padding:24px">GIS.Coffee needs JavaScript enabled.</p></noscript>
 
-<div class="h-full flex flex-col md:flex-row">
+<div id="appShell" class="h-full flex flex-col md:flex-row">
 
   <!-- ============================== SIDEBAR ============================== -->
   <aside id="sidebar" class="relative z-20 flex flex-col bg-white w-full md:w-[400px] h-[56vh] md:h-full shrink-0 border-b md:border-b-0 md:border-r border-line">
 
     <header class="px-5 md:px-8 pt-5 md:pt-7 pb-4 md:pb-5">
-      <a href="./" class="inline-flex items-center gap-3" aria-label="GIS.Coffee home">
-        <span class="w-10 h-10 rounded-full bg-milk grid place-items-center">
-          <svg viewBox="0 0 32 32" class="w-6 h-6 text-caramel" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M11 3.5c-1.4 1.4 1.4 2.8 0 4.2M16 2.5c-1.4 1.4 1.4 2.8 0 4.2M21 3.5c-1.4 1.4 1.4 2.8 0 4.2"/>
-            <path d="M5 11h19v6a8 8 0 0 1-8 8h-3a8 8 0 0 1-8-8v-6z" fill="currentColor" fill-opacity=".14"/>
-            <path d="M24 13h1.5a3.5 3.5 0 0 1 0 7H23M4 29h22"/>
-          </svg>
-        </span>
-        <span class="font-display text-[24px] font-semibold tracking-tight">GIS<span class="text-crema">.</span>Coffee</span>
-      </a>
-      <p class="hint mt-3 hidden md:block">Convert spatial files, make maps, and view attribute tables. Free, and your files stay in your browser.</p>
+      <div class="flex items-center justify-between">
+        <a href="./" class="inline-flex items-center gap-3" aria-label="GIS.Coffee home">
+          <span class="w-10 h-10 rounded-full bg-milk grid place-items-center">
+              <svg viewBox="0 0 32 32" class="w-6 h-6 text-caramel" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M11 3.5c-1.4 1.4 1.4 2.8 0 4.2M16 2.5c-1.4 1.4 1.4 2.8 0 4.2M21 3.5c-1.4 1.4 1.4 2.8 0 4.2"/>
+              <path d="M5 11h19v6a8 8 0 0 1-8 8h-3a8 8 0 0 1-8-8v-6z" fill="currentColor" fill-opacity=".14"/>
+              <path d="M24 13h1.5a3.5 3.5 0 0 1 0 7H23M4 29h22"/>
+            </svg>
+          </span>
+          <span class="font-sans text-[24px] font-semibold tracking-tight">GIS<span class="text-crema">.</span>Coffee</span>
+        </a>
+        <button id="panelToggle" class="md:hidden grid place-items-center w-9 h-9 rounded-lg border border-line bg-milk text-espresso" type="button" aria-label="Collapse tools" aria-expanded="true" aria-controls="panels" title="Collapse tools">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+      </div>
+      <p class="hint mt-3 hidden md:block">Brew up a map, convert files, and inspect attributes. Your files stay in your browser.</p>
     </header>
 
     <nav class="px-5 md:px-8" aria-label="Tools">
@@ -201,13 +277,13 @@
       <section id="panel-data" class="panel space-y-8" role="tabpanel">
         <div>
           <h2 class="text-[22px] font-semibold tracking-tight">Convert file formats</h2>
-          <p class="hint mt-1">Open a spatial file to map it, inspect its attributes, or export it in another format.</p>
+          <p class="hint mt-1">Start with a spatial file to map it, inspect its attributes, or pour it into another format.</p>
         </div>
 
         <label id="dropzone" class="drop" tabindex="0">
-          <svg viewBox="0 0 24 24" class="full w-10 h-10 mx-auto text-caramel" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          <svg viewBox="0 0 24 24" class="full w-10 h-10 mx-auto text-espresso" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
           <div class="full text-[16px] font-semibold mt-4">Drag a file here</div><div class="replace hidden text-[14px] font-semibold">Drop another file to replace this layer</div>
-          <div class="full hint mt-1">or <span class="text-caramel font-semibold underline underline-offset-2">browse your computer</span></div>
+          <div class="full hint mt-1 text-espresso">or <span class="text-espresso font-semibold underline underline-offset-2">browse your computer</span></div>
           <div class="full mt-5 flex flex-wrap justify-center gap-1.5">
             <span class="pill">.zip (Shapefile)</span><span class="pill">.kml</span><span class="pill">.kmz</span><span class="pill">.geojson</span><span class="pill">.csv</span><span class="pill">.gpkg</span>
           </div>
@@ -223,10 +299,10 @@
           <div class="flex gap-3">
             <svg viewBox="0 0 24 24" class="w-5 h-5 shrink-0 text-berry mt-0.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>
             <div class="flex-1 min-w-0">
-              <p id="errorMsg" class="text-[14px] font-medium text-[#8c1d18] leading-snug"></p>
-              <p id="errorDetail" class="text-[13px] text-[#5f2b27] mt-1.5 leading-snug"></p>
+              <p id="errorMsg" class="text-[14px] font-medium text-berry leading-snug"></p>
+              <p id="errorDetail" class="text-[13px] text-roast mt-1.5 leading-snug"></p>
             </div>
-            <button id="errorClose" class="shrink-0 w-7 h-7 rounded-full text-[#8c1d18] hover:bg-white/60" aria-label="Dismiss">✕</button>
+            <button id="errorClose" class="shrink-0 w-7 h-7 rounded-full text-berry hover:bg-white/60" aria-label="Dismiss">✕</button>
           </div>
         </div>
 
@@ -290,7 +366,7 @@
           <div class="label mb-3">Layer color</div>
           <div class="flex items-center gap-2.5 flex-wrap">
             <div id="swatches" class="contents"></div>
-            <input id="colorPicker" type="color" value="#b8662a" title="Custom color" aria-label="Custom color" />
+            <input id="colorPicker" type="color" value="#007f9e" title="Custom color" aria-label="Custom color" />
           </div>
         </div>
 
@@ -401,16 +477,11 @@
       <div id="legendCount" data-print="text" class="text-[12px] text-mocha mt-1 leading-[1.3]"></div>
     </div>
 
-    <div id="coords" class="absolute bottom-5 right-5 z-10 hidden sm:flex items-center gap-3 rounded-full bg-white/90 backdrop-blur px-4 py-1.5 text-[12px] font-mono text-roast shadow-sm pointer-events-none whitespace-nowrap" style="margin-bottom:28px">
-      <span>Lat <b id="latVal" class="font-medium text-espresso">–</b></span>
-      <span>Lon <b id="lonVal" class="font-medium text-espresso">–</b></span>
-    </div>
-
     <!-- Welcome -->
     <div id="welcome" class="absolute inset-0 z-10 grid place-items-center p-6 pointer-events-none">
-      <div class="pointer-events-auto max-w-[440px] w-full rounded-3xl bg-white/95 backdrop-blur px-10 py-10 text-center shadow-[0_2px_6px_rgba(42,27,20,.06),0_24px_60px_rgba(42,27,20,.14)]">
-        <h1 class="font-display text-[28px] font-semibold leading-tight">Convert files. Make maps. View attribute tables.</h1>
-        <p class="hint mt-3 text-[14px]">Work with spatial data in your browser. Your files stay on your device.</p>
+      <div class="pointer-events-auto max-w-[440px] w-full rounded-xl bg-white/95 backdrop-blur px-10 py-10 text-center shadow-[0_2px_6px_rgba(0,0,0,.3),0_24px_60px_rgba(0,0,0,.45)]">
+        <h1 class="font-sans text-[28px] font-semibold leading-tight">Convert files. Make maps. View attribute tables.</h1>
+        <p class="hint mt-3 text-[14px]">Your files stay on your device while you brew up a map.</p>
         <div class="flex flex-wrap justify-center gap-2 mt-7">
           <button id="welcomeUpload" class="btn btn-primary">Upload a file</button>
           <button id="welcomeSample" class="btn btn-outline">Try sample data</button>
@@ -421,7 +492,7 @@
     <div id="toasts" class="absolute top-5 right-16 max-sm:top-auto max-sm:bottom-6 max-sm:left-4 max-sm:right-4 max-sm:items-center z-30 flex flex-col items-end gap-2 pointer-events-none max-w-[360px]"></div>
 
     <div id="loading" class="hidden absolute inset-0 z-40 bg-foam/70 backdrop-blur-sm grid place-items-center">
-      <div class="flex flex-col items-center gap-4 rounded-3xl bg-white px-10 py-8 shadow-xl">
+      <div class="flex flex-col items-center gap-4 rounded-xl border border-line bg-white px-10 py-8 shadow-xl">
         <div class="flex items-start"><div class="cup"><i></i></div><div class="cup-h"></div></div>
         <div id="loadingMsg" class="text-[14px] font-medium">Loading file…</div>
       </div>
@@ -430,9 +501,9 @@
 </div>
 
 <div id="dropVeil" class="hidden fixed inset-0 z-50 bg-foam/90 backdrop-blur-sm grid place-items-center pointer-events-none">
-  <div class="border-2 border-dashed border-caramel rounded-[32px] px-16 py-14 text-center bg-white">
+  <div class="border border-dashed border-caramel rounded-xl px-16 py-14 text-center bg-white">
     <div class="text-5xl">☕</div>
-    <div class="font-display text-[26px] font-semibold mt-3">Drop a file to import</div>
+    <div class="font-sans text-[26px] font-semibold mt-3">Drop a file to import</div>
     <div class="hint mt-1">Shapefile (.zip) · KML/KMZ · GeoJSON · CSV · GeoPackage</div>
   </div>
 </div>
@@ -470,7 +541,7 @@ const FORMAT_NAMES = { shp: 'Shapefile', kml: 'KML', kmz: 'KMZ', geojson: 'GeoJS
 
 const state = {
   data: null, name: '', format: '',
-  basemap: 'street', style: { color: '#b8662a', opacity: 0.85, width: 2, radius: 6 },
+  basemap: 'street', style: { color: '#007f9e', opacity: 0.85, width: 2, radius: 6 },
   table: null, tableDirty: true, chart: null, chartDirty: true, edits: 0,
   hlAnim: null, popup: null, tab: 'data', legend: true, serif: true
 };
@@ -491,7 +562,7 @@ function downloadBlob(blob, filename) {
 
 /* ------------------------------ Feedback ------------------------------ */
 function toast(msg, kind = 'info', ms = 3500) {
-  const dot = { info: '#c98a4b', ok: '#3f7d3a', warn: '#c98a4b', err: '#b3261e' }[kind] || '#c98a4b';
+  const dot = { info: '#007f9e', ok: '#168a55', warn: '#b88700', err: '#df4d57' }[kind] || '#007f9e';
   const el = document.createElement('div');
   el.className = 'toast pointer-events-auto flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_4px_20px_rgba(42,27,20,.16)] text-[13px] text-espresso';
   el.innerHTML = `<span class="w-2 h-2 rounded-full shrink-0" style="background:${dot}"></span><div class="leading-snug">${msg}</div>`;
@@ -565,9 +636,9 @@ function addDataLayers() {
   if (!map.getLayer('lyr-fill'))  map.addLayer({ id: 'lyr-fill', type: 'fill', source: 'lyr', filter: POLY, paint: { 'fill-color': '#000', 'fill-opacity': .4 } });
   if (!map.getLayer('lyr-line'))  map.addLayer({ id: 'lyr-line', type: 'line', source: 'lyr', filter: LINEY, layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#000' } });
   if (!map.getLayer('lyr-point')) map.addLayer({ id: 'lyr-point', type: 'circle', source: 'lyr', filter: PTS, paint: { 'circle-color': '#000', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 1.5 } });
-  if (!map.getLayer('hl-fill'))  map.addLayer({ id: 'hl-fill', type: 'fill', source: 'lyr-hl', filter: POLY, paint: { 'fill-color': '#2a1b14', 'fill-opacity': 0 } });
-  if (!map.getLayer('hl-line'))  map.addLayer({ id: 'hl-line', type: 'line', source: 'lyr-hl', filter: LINEY, layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#2a1b14', 'line-width': 4, 'line-opacity': 0 } });
-  if (!map.getLayer('hl-point')) map.addLayer({ id: 'hl-point', type: 'circle', source: 'lyr-hl', filter: PTS, paint: { 'circle-color': 'rgba(0,0,0,0)', 'circle-radius': 14, 'circle-stroke-color': '#2a1b14', 'circle-stroke-width': 3, 'circle-stroke-opacity': 0 } });
+  if (!map.getLayer('hl-fill'))  map.addLayer({ id: 'hl-fill', type: 'fill', source: 'lyr-hl', filter: POLY, paint: { 'fill-color': '#23333d', 'fill-opacity': 0 } });
+  if (!map.getLayer('hl-line'))  map.addLayer({ id: 'hl-line', type: 'line', source: 'lyr-hl', filter: LINEY, layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#23333d', 'line-width': 4, 'line-opacity': 0 } });
+  if (!map.getLayer('hl-point')) map.addLayer({ id: 'hl-point', type: 'circle', source: 'lyr-hl', filter: PTS, paint: { 'circle-color': 'rgba(0,0,0,0)', 'circle-radius': 14, 'circle-stroke-color': '#23333d', 'circle-stroke-width': 3, 'circle-stroke-opacity': 0 } });
 }
 map.on('style.load', () => { addDataLayers(); applyStyle(); });
 
@@ -585,7 +656,7 @@ function applyStyle() {
     map.setPaintProperty('lyr-point', 'circle-opacity', s.opacity);
     map.setPaintProperty('lyr-point', 'circle-stroke-color', outline);
     map.setPaintProperty('lyr-point', 'circle-stroke-opacity', Math.min(1, s.opacity + 0.15));
-    const hl = state.basemap === 'dark' ? '#fff6e8' : '#2a1b14';
+    const hl = state.basemap === 'dark' ? '#fff6e8' : '#23333d';
     map.setPaintProperty('hl-fill', 'fill-color', hl);
     map.setPaintProperty('hl-line', 'line-color', hl);
     map.setPaintProperty('hl-point', 'circle-stroke-color', hl);
@@ -602,8 +673,6 @@ function setBasemap(key) {
 
 const liveHit = () => HIT.filter(l => map.getLayer(l));
 map.on('mousemove', e => {
-  $('#latVal').textContent = e.lngLat.lat.toFixed(5);
-  $('#lonVal').textContent = e.lngLat.lng.toFixed(5);
   if (!state.data) return;
   map.getCanvas().style.cursor = map.queryRenderedFeatures(e.point, { layers: liveHit() }).length ? 'pointer' : '';
 });
@@ -630,13 +699,13 @@ function openPopup(f, lngLat) {
   const p = f.properties || {}, nk = nameKeyOf(p);
   const title = nk && p[nk] !== null && p[nk] !== '' ? p[nk] : `Feature ${f.id + 1}`;
   const keys = Object.keys(p).filter(k => k !== nk);
-  const rows = keys.slice(0, 12).map(k => `<div class="pop-row"><div class="k" title="${esc(k)}">${esc(k)}</div><div class="v">${p[k] === null || p[k] === '' ? '<span style="color:#a8978a">–</span>' : esc(trunc(p[k], 140))}</div></div>`).join('');
-  const more = keys.length > 12 ? `<div style="font-size:12px;color:#6e5b4e;padding-top:8px">+ ${keys.length - 12} more fields in the table</div>` : '';
+  const rows = keys.slice(0, 12).map(k => `<div class="pop-row"><div class="k" title="${esc(k)}">${esc(k)}</div><div class="v">${p[k] === null || p[k] === '' ? '<span style="color:var(--mocha)">–</span>' : esc(trunc(p[k], 140))}</div></div>`).join('');
+  const more = keys.length > 12 ? `<div style="font-size:12px;color:var(--mocha);padding-top:8px">+ ${keys.length - 12} more fields in the table</div>` : '';
   const m = measure(f);
   const html = `<div style="padding:18px 20px 14px;min-width:240px">
       <div style="font-size:16px;font-weight:600;line-height:1.25;padding-right:22px">${esc(trunc(title, 80))}</div>
-      ${m ? `<div style="font-size:12px;color:#8a4f24;margin-top:4px">${m}</div>` : ''}
-      <div class="scroll-soft" style="margin-top:12px;max-height:230px;overflow-y:auto">${rows || '<div style="font-size:13px;color:#6e5b4e">No attributes</div>'}${more}</div>
+      ${m ? `<div style="font-size:12px;color:var(--caramel);margin-top:4px">${m}</div>` : ''}
+      <div class="scroll-soft" style="margin-top:12px;max-height:230px;overflow-y:auto">${rows || '<div style="font-size:13px;color:var(--mocha)">No attributes</div>'}${more}</div>
     </div>`;
   if (state.popup) state.popup.remove();
   state.popup = new maplibregl.Popup({ maxWidth: '340px', offset: 12 }).setLngLat(lngLat).setHTML(html).addTo(map);
@@ -1057,9 +1126,9 @@ function renderLayerCard() {
   const types = Object.entries(s.counts).map(([k, v]) => `${fmt(v)} ${names[k] ? names[k][v === 1 ? 0 : 1] : k}`).join(' · ') + (s.nulls ? ` · ${fmt(s.nulls)} without location` : '');
   const size = s.area ? `${fmt(s.area / 1e6, s.area < 1e7 ? 2 : 0)} km² total area` : s.length ? `${fmt(s.length, 1)} km total length` : '';
   $('#layerCard').innerHTML = `
-    <div class="rounded-3xl border border-line p-6">
+    <div class="rounded-xl border border-line bg-white p-6">
       <div class="flex items-start gap-4">
-        <div class="w-11 h-11 rounded-full bg-[#e7f1e5] grid place-items-center shrink-0">
+        <div class="w-11 h-11 rounded-lg bg-[#283326] grid place-items-center shrink-0">
           <svg viewBox="0 0 24 24" class="w-5 h-5 text-matcha" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
         </div>
         <div class="min-w-0">
@@ -1251,7 +1320,7 @@ function renderChart() {
   }
   const full = ['Total records', 'Unique values', ...top.map(([k]) => k)];
   const data = [total, counts.size, ...top.map(x => x[1])];
-  const colors = ['#2a1b14', '#8a4f24', '#c98a4b', '#d49d66', '#dcb081', '#e4c29c', '#ecd4b8'];
+  const colors = ['#007f9e', '#e0aa00', '#de5d49', '#2c995a', '#5168cc', '#865bb0', '#d45c9c'];
   if (state.chart) state.chart.destroy();
   state.chart = new Chart($('#chart'), {
     type: 'bar',
@@ -1260,14 +1329,14 @@ function renderChart() {
       indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: { duration: 500 },
       plugins: {
         legend: { display: false },
-        tooltip: { backgroundColor: '#2a1b14', padding: 10, cornerRadius: 10, callbacks: {
+        tooltip: { backgroundColor: '#23333d', titleColor: '#ffffff', bodyColor: '#f4f8fa', padding: 10, cornerRadius: 8, callbacks: {
           title: items => full[items[0].dataIndex],
           label: c => c.dataIndex > 1 ? `${fmt(c.raw)} records (${(c.raw / total * 100).toFixed(1)}%)` : fmt(c.raw)
         } }
       },
       scales: {
-        x: { beginAtZero: true, grid: { color: '#f1e9e0' }, border: { display: false }, ticks: { precision: 0, color: '#6e5b4e' } },
-        y: { grid: { display: false }, border: { display: false }, ticks: { color: '#2a1b14', font: { size: 12, weight: 500 } } }
+        x: { beginAtZero: true, grid: { color: '#e2eaed' }, border: { display: false }, ticks: { precision: 0, color: '#5b6d77' } },
+        y: { grid: { display: false }, border: { display: false }, ticks: { color: '#23333d', font: { size: 12, weight: 500 } } }
       }
     }
   });
@@ -1322,11 +1391,11 @@ function compose(mapCanvas) {
   ctx.drawImage(mapCanvas, 0, 0);
   drawCard(ctx, $('#titleCard'), base, r);
   drawCard(ctx, $('#legend'), base, r);
-  const credit = '© Mapbox © OpenStreetMap  ·  Made with GIS.Coffee';
+  const credit = `${BASEMAPS[state.basemap].attribution} · Made with GIS.Coffee`;
   ctx.font = `500 ${11 * r}px Inter, sans-serif`;
   const tw = ctx.measureText(credit).width, pad = 9 * r, ph = 22 * r, px = W - tw - pad * 2 - 12 * r, py = H - ph - 12 * r;
-  rr(ctx, px, py, tw + pad * 2, ph, 11 * r); ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fill();
-  ctx.fillStyle = '#5c4033'; ctx.textBaseline = 'middle'; ctx.fillText(credit, px + pad, py + ph / 2);
+  rr(ctx, px, py, tw + pad * 2, ph, 5 * r); ctx.fillStyle = 'rgba(24,26,34,.94)'; ctx.fill();
+  ctx.fillStyle = '#c2c6d2'; ctx.textBaseline = 'middle'; ctx.fillText(credit, px + pad, py + ph / 2);
   return c;
 }
 async function printMap() {
@@ -1402,7 +1471,7 @@ function updateTitle() {
   $('#mapTitle').classList.toggle('font-sans', !state.serif);
 }
 const setFill = el => el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%');
-const SWATCHES = [['#b8662a', 'Caramel'], ['#2a1b14', 'Espresso'], ['#c0392b', 'Cherry'], ['#2f6fb5', 'Blueberry'], ['#3f7d3a', 'Matcha'], ['#7b4fa0', 'Lavender']];
+const SWATCHES = [['#007f9e', 'Teal'], ['#e0aa00', 'Gold'], ['#ed5660', 'Coral'], ['#168a55', 'Green'], ['#4267d5', 'Blue'], ['#8d45cf', 'Violet']];
 function setColor(hex) {
   state.style.color = hex; $('#colorPicker').value = hex;
   $$('.sw').forEach(b => b.classList.toggle('sel', b.dataset.c.toLowerCase() === hex.toLowerCase()));
@@ -1411,6 +1480,12 @@ function setColor(hex) {
 
 function wire() {
   $$('.tab').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+  $('#panelToggle').addEventListener('click', e => {
+    const collapsed = $('#sidebar').classList.toggle('mobile-collapsed');
+    e.currentTarget.setAttribute('aria-expanded', String(!collapsed));
+    e.currentTarget.setAttribute('aria-label', collapsed ? 'Expand tools' : 'Collapse tools');
+    e.currentTarget.title = collapsed ? 'Expand tools' : 'Collapse tools';
+  });
   $$('[data-goto]').forEach(b => b.addEventListener('click', () => showTab(b.dataset.goto)));
 
   const dz = $('#dropzone'), fi = $('#fileInput');
