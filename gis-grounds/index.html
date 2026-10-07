@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f0f6f1">
+  <meta name="description" content="A curated shelf of GIS tools, map inspiration, and reference links.">
+  <title>GIS Grounds · GIS.Coffee</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme:light; --ink:#23352d; --muted:#6a7971; --line:#d9e3dc; --paper:#fff; --wash:#f0f6f1; --green:#39704d; --mint:#dcebe0; --orange:#d66c47; }
+    * { box-sizing:border-box; } body { margin:0; min-height:100vh; color:var(--ink); font:15px 'DM Sans',sans-serif; background:var(--wash); }
+    a { color:inherit; text-decoration:none; } button,input { font:inherit; }.shell { width:min(100% - 36px,980px); margin:0 auto; }
+    header { height:76px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); }.brand { display:flex; align-items:center; gap:10px; font-weight:700; }.mark { width:34px; height:34px; display:grid; place-items:center; border-radius:50%; color:#fff; background:var(--green); }.mark svg { width:21px; height:21px; }.back { color:var(--muted); font-size:13px; }.back:hover { color:var(--green); }
+    main { padding:52px 0 80px; }.heading { display:flex; align-items:end; justify-content:space-between; gap:24px; margin-bottom:26px; }.eyebrow { margin:0 0 9px; color:var(--green); font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }h1 { margin:0; font:600 clamp(36px,5vw,48px)/1.08 'Fraunces',Georgia,serif; letter-spacing:0; }.subtitle { margin:10px 0 0; color:var(--muted); line-height:1.55; }
+    .count { flex:none; color:var(--muted); font-size:13px; font-variant-numeric:tabular-nums; }
+    .link-description { margin:4px 0 0; color:var(--muted); font-size:13px; line-height:1.4; }
+    .guide-link { display:inline-flex; margin-top:12px; color:var(--green); font-size:13px; font-weight:700; }.guide-link:hover { text-decoration:underline; text-underline-offset:3px; }
+    .list-head { display:flex; align-items:center; justify-content:space-between; gap:14px; margin:26px 0 10px; }.list-head h2 { margin:0; font-size:14px; }.search { width:min(100%,280px); height:38px; padding:0 12px; border:1px solid var(--line); border-radius:5px; outline:none; background:var(--paper); }.search:focus-visible { border-color:var(--green); box-shadow:0 0 0 3px rgb(57 112 77 / .13); }.links { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; min-width:0; }.link-row { display:flex; align-items:center; gap:14px; min-width:0; padding:14px 15px; background:var(--paper); border:1px solid var(--line); border-radius:6px; animation:arrive .2s ease both; }.link-main { min-width:0; flex:1; }.link-title { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700; }.link-url { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:3px; color:var(--muted); font-size:12px; }.tag { flex:none; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:5px 8px; border-radius:4px; background:var(--mint); color:#365c43; font-size:11px; font-weight:600; }.open-link { flex:none; width:36px; height:36px; display:grid; place-items:center; border:1px solid var(--line); border-radius:5px; color:var(--green); }.open-link:hover { background:var(--mint); }.open-link:focus-visible { outline:2px solid var(--green); outline-offset:2px; }.open-link svg { width:17px; height:17px; }.empty { padding:34px 18px; border:1px dashed #b8c9bc; border-radius:6px; text-align:center; color:var(--muted); }.empty strong { display:block; color:var(--ink); font-size:15px; }.empty p { margin:6px 0 0; font-size:13px; }
+    @keyframes arrive { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+    @media(max-width:720px) { .shell { width:min(100% - 28px,520px); }main { padding:40px 0 56px; }.heading { align-items:start; }.fields { grid-template-columns:1fr 1fr; }.fields .field:nth-child(2) { grid-column:span 2; }.submit { grid-column:span 2; }.link-row { gap:9px; padding:12px 10px; }.tag { max-width:88px; } }
+    @media(max-width:420px) { .heading { display:block; }.count { display:block; margin-top:14px; }.list-head { align-items:stretch; flex-direction:column; }.search { width:100%; }.tag { display:none; }.add { padding:16px; } }
+    @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <a class="brand" href="../"><span class="mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4c-1.4 1.4 1.4 2.8 0 4.2M17 3c-1.4 1.4 1.4 2.8 0 4.2"/><path d="M5 12h19v5a8 8 0 0 1-8 8h-3a8 8 0 0 1-8-8v-5Z"/><path d="M24 14h1a3.5 3.5 0 0 1 0 7h-2M5 29h20"/></svg></span>GIS.Coffee</a>
+      <a class="back" href="../">All apps</a>
+    </header>
+    <main>
+      <section class="heading"><div><p class="eyebrow">A curated GIS shelf</p><h1>GIS Grounds</h1><p class="subtitle">Useful tools, map inspiration, and reference material.</p><a class="guide-link" href="./modern-gis/">What is the modern GIS stack?</a></div><span class="count" id="count" aria-live="polite">0 links</span></section>
+      <section aria-labelledby="saved-title">
+        <div class="list-head"><h2 id="saved-title">GIS bookmarks</h2><input class="search" id="searchInput" type="search" placeholder="Filter links" aria-label="Filter links"></div>
+        <div class="links" id="linksList"></div>
+      </section>
+    </main>
+  </div>
+  <script>
+    (() => {
+      const links = [
+        { title: 'GeoHaff', url: 'https://geohaff.com/', category: 'GIS tools', description: 'A geospatial blog with practical GIS, mapping, and reproducible-science projects.' },
+        { title: 'GIS Cheatsheets: ArcMap & ArcGIS Pro', url: 'https://github.com/DigitalDataServices/gis-cheatsheets/blob/master/software/esri-arcmap-and-arcgis-pro.md', category: 'Reference', description: 'A compact Esri reference covering data types, map precision, and direction systems.' },
+        { title: 'Public Land Mapper: Datums, Projections & Coordinates', url: 'https://www.fws.gov/r7/nwr/Realty/data/LandMappers/Public/Help/HTML/R7-Public-Land-Mapper-Help.html?Datumsprojectionsandcoordinatesy.html', category: 'Reference', description: 'Fish and Wildlife Service guidance on geodesy and coordinate systems for Land Mapper users.' },
+        { title: 'Axis Maps', url: 'https://www.axismaps.com/', category: 'Cartography', description: 'A cartography studio sharing interactive map projects, design tools, and mapping guides.' },
+        { title: 'Something About Maps', url: 'https://somethingaboutmaps.wordpress.com/', category: 'Cartography', description: 'Daniel Huffman writes about cartography, map design, projections, and the craft of making maps.' },
+        { title: 'Text Styling Fundamentals (MDN)', url: 'https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Text_styling/Fundamentals', category: 'Web craft', description: 'A web-development guide to font families, typography, and CSS text layout.' },
+        { title: 'Matt Forrest: Modern GIS', url: 'https://forrest.nyc/tag/modern-gis/', category: 'Modern GIS', description: 'Matt Forrest writes about modern GIS tools, cloud workflows, and geospatial formats.' },
+        { title: 'DHH: Software and Product Development', url: 'https://world.hey.com/dhh', category: 'Development', description: 'David Heinemeier Hansson writes about Rails, software design, small teams, and product work.' },
+        { title: 'DHH: Promoting AI Agents', url: 'https://world.hey.com/dhh/promoting-ai-agents-3ee04945', category: 'Agentic coding', description: 'DHH describes how coding agents use tools and feedback to take on more development work.' },
+        { title: 'Omarchy Linux: Source and Manual', url: 'https://github.com/omacom/omarchy', category: 'Linux', description: 'The source and manual for DHH’s opinionated, keyboard-first Linux distribution.' },
+        { title: 'VS Code: Build with AI Agents', url: 'https://code.visualstudio.com/docs/agents/overview', category: 'Agentic coding', description: 'The official guide to agent workflows, project context, tools, and reviewing changes in VS Code.' },
+        { title: 'GitHub Copilot: Agentic Experiences', url: 'https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent', category: 'Agentic coding', description: 'An overview of Copilot chat, delegated coding tasks, customization, and review on GitHub.' },
+        { title: 'ArcGIS Maps SDK for JavaScript', url: 'https://developers.arcgis.com/javascript/latest/', category: 'Esri platform', description: 'Official developer docs for building interactive 2D and 3D mapping applications with Esri services.' },
+        { title: 'ArcGIS Enterprise Documentation', url: 'https://enterprise.arcgis.com/en/', category: 'Esri platform', description: 'Official guidance for deploying, managing, securing, and automating ArcGIS Enterprise.' },
+        { title: 'GDAL/OGR Documentation', url: 'https://gdal.org/en/stable/', category: 'Open GIS', description: 'Official documentation for GDAL/OGR libraries and command-line tools for geospatial formats and processing.' },
+        { title: 'QGIS Processing from the Command Line', url: 'https://docs.qgis.org/latest/en/docs/user_manual/processing/standalone.html', category: 'Open GIS', description: 'Learn to run QGIS Processing algorithms and models with qgis_process without opening QGIS Desktop.' }
+      ];
+      const list = document.querySelector('#linksList');
+      const search = document.querySelector('#searchInput');
+      const count = document.querySelector('#count');
+      function render() {
+        const query = search.value.trim().toLowerCase();
+        const shown = links.filter(link => `${link.title} ${link.url} ${link.category || ''} ${link.description}`.toLowerCase().includes(query));
+        count.textContent = `${links.length} ${links.length === 1 ? 'link' : 'links'}`;
+        list.replaceChildren();
+        if (!shown.length) {
+          const empty = document.createElement('div');
+          empty.className = 'empty';
+          const title = document.createElement('strong');
+          title.textContent = links.length ? 'No matching links' : 'No bookmarks yet';
+          const note = document.createElement('p');
+          note.textContent = links.length ? 'Try another search.' : 'The curated shelf is empty.';
+          empty.append(title, note);
+          list.append(empty);
+          return;
+        }
+        for (const link of shown) {
+          const row = document.createElement('article');
+          row.className = 'link-row';
+          const main = document.createElement('div');
+          main.className = 'link-main';
+          const title = document.createElement('a');
+          title.className = 'link-title';
+          title.href = link.url;
+          title.target = '_blank';
+          title.rel = 'noopener noreferrer';
+          title.textContent = link.title;
+          const description = document.createElement('p');
+          description.className = 'link-description';
+          description.textContent = link.description;
+          main.append(title, description);
+          row.append(main);
+          if (link.category) {
+            const tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.textContent = link.category;
+            row.append(tag);
+          }
+          const open = document.createElement('a');
+          open.className = 'open-link';
+          open.href = link.url;
+          open.target = '_blank';
+          open.rel = 'noopener noreferrer';
+          open.setAttribute('aria-label', `Open ${link.title} in a new tab`);
+          open.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6"/></svg>';
+          row.append(open);
+          list.append(row);
+        }
+      }
+      search.addEventListener('input', render);
+      render();
+    })();
+  </script>
+</body>
+</html>

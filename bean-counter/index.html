@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fbf5f0">
+  <meta name="description" content="Quick arithmetic and playful coffee brew-ratio calculations.">
+  <title>Bean Counter · GIS.Coffee</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme:light; --ink:#302a27; --muted:#766b64; --line:#e7dcd3; --paper:#fff; --wash:#fbf5f0; --coffee:#984a32; --cream:#f2d5bf; --mint:#d9ebe2; }
+    * { box-sizing:border-box; } body { margin:0; width:100%; height:100vh; height:100dvh; overflow:hidden; color:var(--ink); font:15px 'DM Sans',sans-serif; background:var(--wash); }
+    a { color:inherit; text-decoration:none; } button,input { font:inherit; } .shell { width:min(100% - 36px,920px); height:100%; margin:0 auto; display:flex; flex-direction:column; }
+    header { flex:none; height:56px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); }
+    .brand { display:flex; align-items:center; gap:10px; font-weight:700; }.mark { width:34px; height:34px; display:grid; place-items:center; border-radius:50%; background:var(--coffee); color:white; }.mark svg { width:21px; height:21px; }
+    .back { color:var(--muted); font-size:13px; }.back:hover { color:var(--coffee); }
+    main { flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:12px 0; }.intro { flex:none; text-align:center; margin:0; }
+    h1 { margin:0; font:600 46px/1.08 'Fraunces',Georgia,serif; letter-spacing:0; }
+    .calculator { width:min(100%,560px); max-height:100%; flex:none; margin:0 auto; background:var(--paper); border:1px solid var(--line); border-radius:8px; overflow:hidden; box-shadow:0 18px 48px rgb(78 49 34 / .07); }
+    .tool-tabs { display:grid; grid-template-columns:1fr 1fr; gap:5px; padding:7px; background:#f4ece5; }.tool-tab { min-height:42px; border:0; border-radius:5px; color:var(--muted); background:transparent; cursor:pointer; font-weight:600; }.tool-tab[aria-pressed="true"] { color:var(--ink); background:white; box-shadow:0 1px 4px rgb(48 42 39 / .12); }
+    .basic-panel { max-width:390px; margin:0 auto; padding:18px 24px 14px; }.basic-display { min-height:88px; display:flex; flex-direction:column; align-items:flex-end; justify-content:flex-end; overflow:hidden; padding:14px 16px; border-radius:6px; background:#302a27; color:#fff; font-variant-numeric:tabular-nums; }.calc-history { width:100%; min-height:18px; margin:0 0 4px; overflow:hidden; color:#d6bdae; font-size:12px; text-align:right; text-overflow:ellipsis; white-space:nowrap; }.calc-display { display:block; max-width:100%; overflow:hidden; font:500 44px/1.1 'Fraunces',Georgia,serif; text-overflow:ellipsis; white-space:nowrap; }
+    .keypad { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; margin-top:10px; }.key { min-height:52px; border:1px solid var(--line); border-radius:5px; color:var(--ink); background:#fffdfa; cursor:pointer; font-size:19px; font-weight:600; transition:background .12s,transform .12s; }.key:hover { background:#f5e9df; }.key:active { transform:scale(.97); }.key.utility { color:var(--coffee); background:#f7eee7; }.key.operator { color:#fff; border-color:var(--coffee); background:var(--coffee); }.key.operator:hover { background:#793922; }.key.equals { color:#24382d; border-color:#c7ddce; background:var(--mint); }.key.zero { grid-column:span 2; }.key:focus-visible,.tool-tab:focus-visible { outline:2px solid var(--coffee); outline-offset:2px; }.calc-caption { margin:12px 0 0; color:var(--muted); font-size:12px; line-height:1.5; text-align:center; }
+    .modes { display:grid; grid-template-columns:1fr 1fr; gap:5px; padding:7px; background:#f4ece5; }.mode { min-height:42px; border:0; border-radius:5px; color:var(--muted); background:transparent; cursor:pointer; font-weight:600; }.mode[aria-pressed="true"] { color:var(--ink); background:white; box-shadow:0 1px 4px rgb(48 42 39 / .12); }
+    .controls { display:grid; grid-template-columns:1fr 1fr; gap:28px; padding:32px 36px 24px; }.field label { display:block; margin-bottom:9px; font-size:12px; font-weight:700; color:var(--muted); }.entry { display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--line); padding-bottom:8px; }.entry input { width:100%; min-width:0; border:0; outline:0; background:transparent; color:var(--ink); font:500 34px/1.2 'Fraunces',Georgia,serif; }.entry input:focus-visible { box-shadow:0 2px 0 var(--coffee); }.unit { color:var(--muted); font-size:14px; }
+    .ratio { display:flex; align-items:center; gap:12px; }.ratio span { color:var(--muted); font:500 22px 'Fraunces',Georgia,serif; }.ratio input { max-width:128px; }.ratio-caption { margin-top:9px; color:var(--muted); font-size:12px; }
+    .result { margin:0 20px 16px; padding:22px 24px 20px; border-radius:6px; color:var(--ink); text-align:center; background:var(--mint); }.result-label { margin:0; color:#486b5a; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; }.amount { display:block; margin:8px 0 0; font:600 62px/1 'Fraunces',Georgia,serif; font-variant-numeric:tabular-nums; }.result-unit { font-size:18px; font-weight:500; }.result-note { margin:8px 0 0; color:#486b5a; font-size:13px; }
+    .footnote { margin:0; padding:0 20px 20px; text-align:center; color:var(--muted); font-size:12px; }
+    .quick-pours { max-width:720px; margin:18px auto 0; }.quick-pours p { margin:0 0 10px; color:var(--muted); font-size:12px; }.pour-buttons { display:flex; flex-wrap:wrap; gap:8px; }.pour { min-height:36px; padding:0 12px; border:1px solid var(--line); border-radius:5px; color:var(--coffee); background:var(--paper); cursor:pointer; font-size:12px; font-weight:600; }.pour:hover { background:#f5e9df; }
+    @media(max-width:580px) { .shell { width:min(100% - 28px,520px); } header { height:52px; }.brand { font-size:14px; }.mark { width:30px; height:30px; }main { gap:8px; padding:8px 0; }.intro h1 { font-size:38px; }.basic-panel { width:100%; padding:16px 18px 12px; }.basic-display { min-height:80px; }.calc-display { font-size:40px; }.keypad { gap:6px; margin-top:8px; }.key { min-height:48px; }.calc-caption { margin-top:9px; }.controls { grid-template-columns:1fr; gap:18px; padding:20px 22px 18px; }.result { margin:0 12px 14px; padding:20px 18px 18px; }.amount { font-size:54px; } }
+    @media(max-height:700px) { header { height:48px; }.brand .mark { width:28px; height:28px; }main { gap:6px; padding:6px 0; }.intro h1 { font-size:34px; }.basic-panel { padding:10px 16px 8px; }.basic-display { min-height:62px; padding:8px 12px; }.calc-display { font-size:34px; }.keypad { gap:5px; margin-top:6px; }.key { min-height:40px; }.calc-caption { margin-top:6px; font-size:11px; }.controls { gap:12px; padding:12px 16px 10px; }.result { margin-bottom:8px; padding:14px 16px 12px; }.amount { font-size:46px; }.quick-pours { margin-top:6px; } }
+    @media(max-height:600px) { .calc-caption,.quick-pours { display:none !important; }.basic-panel { padding:6px 12px; }.basic-display { min-height:48px; }.keypad { gap:4px; margin-top:5px; }.key { min-height:32px; }.controls { grid-template-columns:1fr 1fr; gap:10px; padding:8px 12px; }.field label { margin-bottom:5px; }.entry input { font-size:26px; }.ratio { gap:6px; }.ratio input { max-width:88px; }.result { padding:12px; }.amount { font-size:42px; } }
+    @media(max-height:470px) { header { height:40px; }.brand .mark { width:24px; height:24px; }.brand .mark svg { width:16px; height:16px; }main { gap:3px; padding:3px 0; }.intro h1 { font-size:26px; }.tool-tabs .tool-tab { min-height:36px; }.basic-panel { padding:5px 12px; }.basic-display { min-height:42px; padding:5px 10px; }.calc-history { min-height:14px; font-size:10px; }.calc-display { font-size:30px; }.keypad { gap:3px; margin-top:4px; }.key { min-height:28px; font-size:16px; }.controls { padding:6px 12px; }.entry input { font-size:24px; }.result { padding:8px; }.amount { margin-top:4px; font-size:36px; }.result-note,.footnote { font-size:11px; } }
+    @media(max-height:470px) { .footnote { display:none; }.tool-tabs,.modes { gap:3px; padding:4px; }.tool-tab,.mode { min-height:30px; }.controls { gap:6px; padding:2px 10px; }.result { margin:0 8px 6px; padding:6px; }.result-label { font-size:10px; }.result-note { margin-top:4px; font-size:10px; }.amount { font-size:34px; } }
+    @media(max-width:580px) { .pour-buttons { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }.pour { min-width:0; padding:0 4px; font-size:11px; line-height:1.15; white-space:normal; } }
+    @media(max-height:700px) { main { gap:4px; }.quick-pours p { margin-bottom:4px; font-size:11px; line-height:1.25; }.pour { min-height:32px; } }
+    @media(prefers-reduced-motion:reduce) { *,*::before,*::after { transition-duration:.01ms !important; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <a class="brand" href="../"><span class="mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4c-1.4 1.4 1.4 2.8 0 4.2M17 3c-1.4 1.4 1.4 2.8 0 4.2"/><path d="M5 12h19v5a8 8 0 0 1-8 8h-3a8 8 0 0 1-8-8v-5Z"/><path d="M24 14h1a3.5 3.5 0 0 1 0 7h-2M5 29h20"/></svg></span>GIS.Coffee</a>
+      <a class="back" href="../">All apps</a>
+    </header>
+    <main>
+      <section class="intro"><h1>Bean Counter</h1></section>
+      <section class="calculator" aria-label="Bean Counter calculator">
+        <div class="tool-tabs" role="tablist" aria-label="Calculator type"><button class="tool-tab" id="basicTab" type="button" role="tab" aria-selected="true" aria-controls="basicPanel" aria-pressed="true">Basic math</button><button class="tool-tab" id="coffeeTab" type="button" role="tab" aria-selected="false" aria-controls="coffeePanel" aria-pressed="false">Coffee math</button></div>
+        <section class="basic-panel" id="basicPanel" role="tabpanel" aria-labelledby="basicTab">
+          <div class="basic-display"><p class="calc-history" id="calcHistory">For bills, beans, and other pressing matters.</p><output class="calc-display" id="calcDisplay" aria-live="polite">0</output></div>
+          <div class="keypad" aria-label="Calculator keypad">
+            <button class="key utility" type="button" data-action="clear" aria-label="Clear all">AC</button><button class="key utility" type="button" data-action="sign" aria-label="Change sign">±</button><button class="key utility" type="button" data-action="percent" aria-label="Percent">%</button><button class="key operator" type="button" data-operator="divide" aria-label="Divide">÷</button>
+            <button class="key" type="button" data-digit="7">7</button><button class="key" type="button" data-digit="8">8</button><button class="key" type="button" data-digit="9">9</button><button class="key operator" type="button" data-operator="multiply" aria-label="Multiply">×</button>
+            <button class="key" type="button" data-digit="4">4</button><button class="key" type="button" data-digit="5">5</button><button class="key" type="button" data-digit="6">6</button><button class="key operator" type="button" data-operator="subtract" aria-label="Subtract">−</button>
+            <button class="key" type="button" data-digit="1">1</button><button class="key" type="button" data-digit="2">2</button><button class="key" type="button" data-digit="3">3</button><button class="key operator" type="button" data-operator="add" aria-label="Add">+</button>
+            <button class="key zero" type="button" data-digit="0">0</button><button class="key" type="button" data-action="decimal" aria-label="Decimal point">.</button><button class="key equals" type="button" data-action="equals" aria-label="Equals">=</button>
+          </div>
+          <p class="calc-caption">Now equipped for grocery totals, tip math, and deciding if another coffee is financially responsible.</p>
+        </section>
+        <section id="coffeePanel" role="tabpanel" aria-labelledby="coffeeTab" hidden>
+          <div class="modes" role="group" aria-label="What are you measuring?"><button class="mode" id="doseMode" type="button" aria-pressed="true">Coffee dose</button><button class="mode" id="waterMode" type="button" aria-pressed="false">Water amount</button></div>
+          <div class="controls">
+            <div class="field"><label id="amountLabel" for="amountInput">Coffee dose</label><div class="entry"><input id="amountInput" type="number" inputmode="decimal" min="0.1" max="2000" step="0.5" value="20"><span class="unit" id="inputUnit">g coffee</span></div></div>
+            <div class="field"><label for="ratioInput">Brew ratio</label><div class="ratio"><span>1 :</span><div class="entry"><input id="ratioInput" type="number" inputmode="decimal" min="1" max="30" step="0.5" value="16"></div></div><p class="ratio-caption">1 part coffee to <span id="ratioCaption">16</span> parts water</p></div>
+          </div>
+          <div class="result" aria-live="polite"><p class="result-label" id="resultLabel">Water for this dose</p><output class="amount" id="resultAmount" for="amountInput ratioInput">320<span class="result-unit"> ml</span></output><p class="result-note" id="resultNote">20 g coffee · 1:16 ratio</p></div>
+          <p class="footnote">Water in grams and millilitres is treated as roughly 1:1.</p>
+        </section>
+      </section>
+      <section class="quick-pours" id="quickPours" aria-label="Coffee math suggestions" hidden><p>Quick pours: because weighing beans is easier than making decisions.</p><div class="pour-buttons"><button class="pour" type="button" data-dose="18" data-ratio="16">One respectable mug · 18 g</button><button class="pour" type="button" data-dose="45" data-ratio="17">Meeting fuel · 45 g</button><button class="pour" type="button" data-dose="20" data-ratio="14">Strong opinions · 20 g</button></div></section>
+    </main>
+  </div>
+  <script>
+    (() => {
+      const amountInput = document.querySelector('#amountInput');
+      const ratioInput = document.querySelector('#ratioInput');
+      const doseMode = document.querySelector('#doseMode');
+      const waterMode = document.querySelector('#waterMode');
+      const amountLabel = document.querySelector('#amountLabel');
+      const inputUnit = document.querySelector('#inputUnit');
+      const resultLabel = document.querySelector('#resultLabel');
+      const resultAmount = document.querySelector('#resultAmount');
+      const resultNote = document.querySelector('#resultNote');
+      const ratioCaption = document.querySelector('#ratioCaption');
+      const basicTab = document.querySelector('#basicTab');
+      const coffeeTab = document.querySelector('#coffeeTab');
+      const basicPanel = document.querySelector('#basicPanel');
+      const coffeePanel = document.querySelector('#coffeePanel');
+      const quickPours = document.querySelector('#quickPours');
+      let mode = 'dose';
+
+      function display(value) {
+        return Number.isFinite(value) ? new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(value) : '—';
+      }
+      function render() {
+        const amount = Number(amountInput.value);
+        const ratio = Number(ratioInput.value);
+        const valid = Number.isFinite(amount) && amount > 0 && Number.isFinite(ratio) && ratio > 0;
+        ratioCaption.textContent = display(ratio);
+        resultAmount.replaceChildren(document.createTextNode(valid ? display(mode === 'dose' ? amount * ratio : amount / ratio) : '—'));
+        const unit = document.createElement('span');
+        unit.className = 'result-unit';
+        unit.textContent = mode === 'dose' ? ' ml' : ' g';
+        resultAmount.append(unit);
+        resultNote.textContent = valid ? (mode === 'dose' ? `${display(amount)} g coffee` : `${display(amount)} ml water`) + ` · 1:${display(ratio)} ratio` : 'Enter values greater than zero';
+      }
+      function setMode(nextMode) {
+        mode = nextMode;
+        const isDose = mode === 'dose';
+        doseMode.setAttribute('aria-pressed', String(isDose));
+        waterMode.setAttribute('aria-pressed', String(!isDose));
+        amountLabel.textContent = isDose ? 'Coffee dose' : 'Water amount';
+        inputUnit.textContent = isDose ? 'g coffee' : 'ml water';
+        resultLabel.textContent = isDose ? 'Water for this dose' : 'Coffee for this water';
+        render();
+      }
+      function setCalculatorTab(tab) {
+        const showCoffee = tab === 'coffee';
+        basicPanel.hidden = showCoffee;
+        coffeePanel.hidden = !showCoffee;
+        quickPours.hidden = !showCoffee;
+        basicTab.setAttribute('aria-selected', String(!showCoffee));
+        basicTab.setAttribute('aria-pressed', String(!showCoffee));
+        coffeeTab.setAttribute('aria-selected', String(showCoffee));
+        coffeeTab.setAttribute('aria-pressed', String(showCoffee));
+      }
+
+      const calcDisplay = document.querySelector('#calcDisplay');
+      const calcHistory = document.querySelector('#calcHistory');
+      let currentValue = '0';
+      let storedValue = null;
+      let pendingOperator = null;
+      let waitingForOperand = false;
+
+      function formatCalc(value) {
+        if (!Number.isFinite(value)) return 'Error';
+        const rounded = Number(value.toPrecision(11));
+        return new Intl.NumberFormat(undefined, { maximumFractionDigits: 10, useGrouping: true }).format(rounded);
+      }
+      function updateCalcDisplay() {
+        calcDisplay.textContent = currentValue === 'Error' ? currentValue : formatCalc(Number(currentValue));
+      }
+      function calculate(left, right, operator) {
+        if (operator === 'add') return left + right;
+        if (operator === 'subtract') return left - right;
+        if (operator === 'multiply') return left * right;
+        if (operator === 'divide') return right === 0 ? NaN : left / right;
+        return right;
+      }
+      function enterDigit(digit) {
+        if (currentValue === 'Error') clearCalc();
+        currentValue = waitingForOperand || currentValue === '0' ? digit : currentValue + digit;
+        waitingForOperand = false;
+        updateCalcDisplay();
+      }
+      function enterDecimal() {
+        if (currentValue === 'Error') clearCalc();
+        if (waitingForOperand) { currentValue = '0.'; waitingForOperand = false; }
+        else if (!currentValue.includes('.')) currentValue += '.';
+        updateCalcDisplay();
+      }
+      function chooseOperator(operator) {
+        if (currentValue === 'Error') clearCalc();
+        const value = Number(currentValue);
+        if (pendingOperator && !waitingForOperand) {
+          const result = calculate(Number(storedValue), value, pendingOperator);
+          currentValue = Number.isFinite(result) ? String(Number(result.toPrecision(11))) : 'Error';
+          updateCalcDisplay();
+          if (currentValue === 'Error') { clearCalc(); currentValue = 'Error'; updateCalcDisplay(); return; }
+        }
+        storedValue = currentValue;
+        pendingOperator = operator;
+        waitingForOperand = true;
+        calcHistory.textContent = `${formatCalc(Number(storedValue))} ${operatorSymbol(operator)}`;
+      }
+      function operatorSymbol(operator) {
+        return { add: '+', subtract: '−', multiply: '×', divide: '÷' }[operator];
+      }
+      function equals() {
+        if (!pendingOperator || waitingForOperand) return;
+        const left = Number(storedValue);
+        const right = Number(currentValue);
+        const result = calculate(left, right, pendingOperator);
+        calcHistory.textContent = `${formatCalc(left)} ${operatorSymbol(pendingOperator)} ${formatCalc(right)} =`;
+        currentValue = Number.isFinite(result) ? String(Number(result.toPrecision(11))) : 'Error';
+        storedValue = null;
+        pendingOperator = null;
+        waitingForOperand = true;
+        updateCalcDisplay();
+      }
+      function clearCalc() {
+        currentValue = '0';
+        storedValue = null;
+        pendingOperator = null;
+        waitingForOperand = false;
+        calcHistory.textContent = 'For bills, beans, and other pressing matters.';
+        updateCalcDisplay();
+      }
+      function handleCalcAction(action) {
+        if (action === 'clear') clearCalc();
+        if (action === 'decimal') enterDecimal();
+        if (action === 'equals') equals();
+        if (action === 'sign' && currentValue !== 'Error') { currentValue = String(-Number(currentValue)); updateCalcDisplay(); }
+        if (action === 'percent' && currentValue !== 'Error') { currentValue = String(Number(currentValue) / 100); updateCalcDisplay(); }
+        if (action === 'backspace' && currentValue !== 'Error' && !waitingForOperand) { currentValue = currentValue.length > 1 ? currentValue.slice(0, -1) : '0'; if (currentValue === '-') currentValue = '0'; updateCalcDisplay(); }
+      }
+      document.querySelector('.keypad').addEventListener('click', event => {
+        const key = event.target.closest('button');
+        if (!key) return;
+        if (key.dataset.digit !== undefined) enterDigit(key.dataset.digit);
+        else if (key.dataset.operator) chooseOperator(key.dataset.operator);
+        else handleCalcAction(key.dataset.action);
+      });
+      document.addEventListener('keydown', event => {
+        if (basicPanel.hidden || event.target.matches('input,textarea,select')) return;
+        if (/^[0-9]$/.test(event.key)) enterDigit(event.key);
+        else if (event.key === '.') enterDecimal();
+        else if (event.key === '+') chooseOperator('add');
+        else if (event.key === '-') chooseOperator('subtract');
+        else if (event.key === '*') chooseOperator('multiply');
+        else if (event.key === '/') { event.preventDefault(); chooseOperator('divide'); }
+        else if (event.key === 'Enter' || event.key === '=') { event.preventDefault(); equals(); }
+        else if (event.key === 'Backspace') handleCalcAction('backspace');
+        else if (event.key === 'Escape') clearCalc();
+        else if (event.key === '%') handleCalcAction('percent');
+      });
+      amountInput.addEventListener('input', render);
+      ratioInput.addEventListener('input', render);
+      doseMode.addEventListener('click', () => setMode('dose'));
+      waterMode.addEventListener('click', () => setMode('water'));
+      basicTab.addEventListener('click', () => setCalculatorTab('basic'));
+      coffeeTab.addEventListener('click', () => setCalculatorTab('coffee'));
+      quickPours.addEventListener('click', event => {
+        const pour = event.target.closest('button[data-dose]');
+        if (!pour) return;
+        amountInput.value = pour.dataset.dose;
+        ratioInput.value = pour.dataset.ratio;
+        setMode('dose');
+      });
+      updateCalcDisplay();
+    })();
+  </script>
+</body>
+</html>
