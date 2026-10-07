@@ -28,9 +28,9 @@
     .eyebrow { margin:0 0 12px; color:var(--teal); font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
     h1 { margin:0; font:600 58px/1.05 'Fraunces',Georgia,serif; letter-spacing:0; }
     .intro p:last-child { margin:14px 0 0; color:var(--muted); line-height:1.6; }
-    .tools { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; max-width:920px; margin:0 auto; }
+    .tools { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px; max-width:960px; margin:0 auto; }
     .tool { min-height:194px; padding:22px 20px 18px; border:1px solid transparent; border-radius:8px; text-align:center; transition:transform .18s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease; animation:arrive .38s ease both; }
-    .tool:nth-child(2) { animation-delay:.06s; }.tool:nth-child(3) { animation-delay:.12s; }.tool:nth-child(4) { animation-delay:.18s; }
+    .tool:nth-child(2) { animation-delay:.06s; }.tool:nth-child(3) { animation-delay:.12s; }.tool:nth-child(4) { animation-delay:.18s; }.tool:nth-child(5) { animation-delay:.24s; }
     .tool:hover,.tool:focus-visible { transform:translateY(-3px); background:var(--paper); border-color:var(--line); box-shadow:0 10px 24px rgb(25 49 58 / .07); outline:none; }
     .app-icon { width:76px; height:76px; display:grid; place-items:center; margin:0 auto 16px; border-radius:22px; }
     .app-icon svg { width:39px; height:39px; }
@@ -38,10 +38,12 @@
     .bean-icon { color:#fff; background:var(--coral); }
     .links-icon { color:#fff; background:var(--leaf); }
     .future-icon { color:var(--ink); background:var(--gold); }
+    .git-icon { color:#fff; background:#344957; }
     .tool h2 { margin:0; font-size:16px; font-weight:700; }
     .tool p { margin:5px 0 0; color:var(--muted); font-size:13px; }
     footer { padding:20px 0 32px; text-align:center; color:var(--muted); font-size:12px; }
     @keyframes arrive { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    @media (max-width:900px) { .tools { grid-template-columns:repeat(3,minmax(0,1fr)); } }
     @media (max-width:640px) { .shell { width:min(100% - 28px,480px); } header { height:70px; }.top-note { font-size:12px; } main { padding:48px 0 56px; }.intro { margin-bottom:24px; }h1 { font-size:40px; }.tools { grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; }.tool { min-height:170px; padding:16px 8px; }.app-icon { width:68px; height:68px; border-radius:20px; } }
     @media (max-width:360px) { .tools { grid-template-columns:1fr; }.tool { display:flex; align-items:center; min-height:auto; gap:16px; padding:14px; text-align:left; }.app-icon { flex:0 0 58px; width:58px; height:58px; margin:0; border-radius:17px; }.app-icon svg { width:32px; height:32px; } }
     @media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto !important; animation-duration:.01ms !important; transition-duration:.01ms !important; } }
@@ -78,6 +80,10 @@
         <a class="tool" href="./gis-grounds/modern-gis/" aria-label="GIS into the future: interoperable GIS tools and agentic development">
           <span class="app-icon future-icon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 35h10l7-10 6 4 9-16"/><path d="M31 13h9v9"/><circle cx="12" cy="35" r="2" fill="currentColor"/><circle cx="25" cy="25" r="2" fill="currentColor"/><circle cx="40" cy="13" r="2" fill="currentColor"/></svg></span>
           <h2>GIS into the future</h2><p>Open tools, ArcGIS Pro, and agents</p>
+        </a>
+        <a class="tool" href="./git-brew/" aria-label="Git Brew Lab: practice branches, commits, pushes, and pull requests">
+          <span class="app-icon git-icon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="10" r="4"/><circle cx="35" cy="36" r="4"/><circle cx="35" cy="12" r="4"/><path d="M13 14v20a6 6 0 0 0 6 6h12M13 20a8 8 0 0 0 8-8h10"/></svg></span>
+          <h2>Git Brew Lab</h2><p>Practice branches, pushes &amp; pull requests</p>
         </a>
       </nav>
     </main>
