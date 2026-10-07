@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
 <title>BrewMap · GIS.Coffee</title>
 <meta name="description" content="Convert spatial file formats, make maps, and view attribute tables in your browser. Free, and your files never leave your device." />
 <meta property="og:title" content="GIS.Coffee · Spatial data tools" />
@@ -14,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <script>
   tailwind.config = {
     theme: { extend: {
@@ -39,8 +40,8 @@
   };
 </script>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@6/dist/css/tabulator.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@6.6.1/dist/css/tabulator.min.css" />
 
 <style>
   :root { color-scheme:light; --espresso:#15232c; --roast:#36515e; --mocha:#5b6d77; --caramel:#007f9e; --crema:#8d45cf; --foam:#f7fbfd; --milk:#e8f7fb; --line:#d8e6eb; --surface:#ffffff; --surface-raised:#f8fbfc; --cyan:#0086a6; --sky:#31c6ef; --sun:#ffdf4f; --lime:#168a55; }
@@ -65,7 +66,24 @@
   #sidebar > header a > span:last-child { font-family: 'JetBrains Mono', monospace; }
 
   #sidebar { transition: width .3s cubic-bezier(.2,.8,.2,1); }
-  @media (min-width: 768px) { #sidebar.wide { width: min(860px, 62vw) !important; } }
+  @media (min-width: 768px) {
+    #sidebar.wide, #appShell.table-workspace #sidebar { width:min(70vw, 1000px) !important; }
+  }
+  #appShell.table-fullscreen #sidebar { width:100% !important; }
+  #appShell.table-fullscreen #mapWrap { display:none; }
+  #appShell.table-workspace #panels { overflow-y:hidden; padding:16px 22px 22px; }
+  #appShell.table-workspace #panel-table { display:flex; height:100%; min-height:0; flex-direction:column; gap:14px; }
+  #appShell.table-workspace #tableBody:not(.hidden) { display:flex; min-height:0; flex:1; flex-direction:column; gap:16px; overflow-y:auto; }
+  #appShell.table-workspace #tableGridSection { flex:none; }
+  #appShell.table-workspace #grid { height:min(54vh, 620px) !important; min-height:320px; }
+  #appShell.table-workspace .table-summary { flex:none; }
+  .table-toolbar { display:grid; gap:8px; margin-bottom:12px; }
+  .table-toolbar-row { display:flex; min-width:0; align-items:center; gap:8px; }
+  .table-toolbar .field { height:40px; border-radius:8px; }
+  #tableQuery { min-width:0; flex:1; }
+  #newFieldName { width:min(220px, 42%); }
+  .table-counts { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px 12px; margin-left:auto; font-size:12px; }
+  .table-counts #rowCount, .table-counts #editCount { white-space:nowrap; }
 
   /* Tabs */
   .tab { flex:1; display:flex; align-items:center; justify-content:center; gap:8px; height:40px; border-radius:10px; font-family:Outfit,Inter,sans-serif; font-size:12px; font-weight:700; color: var(--roast); transition: background .15s, color .15s; }
@@ -191,6 +209,14 @@
     #mapWrap { position:absolute; inset:0; width:100%; height:100%; }
     #sidebar { position:absolute; top:auto; right:12px; bottom:calc(env(safe-area-inset-bottom) + 12px); left:12px; width:auto !important; height:min(50svh, 500px) !important; max-height:min(50svh, 500px); border:1px solid var(--line) !important; border-radius:18px; box-shadow:0 12px 36px rgba(35,51,61,.2); overflow:hidden; }
     #sidebar.mobile-collapsed { height:auto !important; max-height:none; }
+    #appShell.table-workspace #sidebar { height:min(84svh, 760px) !important; max-height:min(84svh, 760px); }
+    #appShell.table-fullscreen #sidebar { top:0; right:0; bottom:0; left:0; width:100% !important; height:100% !important; max-height:none; border-radius:0; }
+    #appShell.table-fullscreen #mapWrap { display:none; }
+    #appShell.table-workspace #map .maplibregl-ctrl-bottom-right { bottom:calc(min(84svh, 760px) + 20px); }
+    #appShell.table-workspace #grid { height:min(48svh, 440px) !important; min-height:250px; }
+    .table-toolbar-row { flex-wrap:wrap; }
+    #newFieldName { min-width:0; flex:1; }
+    .table-counts { margin-left:0; }
     #sidebar.mobile-collapsed nav, #sidebar.mobile-collapsed main { display:none; }
     #sidebar.mobile-collapsed > header { padding-top:8px !important; padding-bottom:8px !important; }
     #panelToggle svg { transition:transform .2s; }
@@ -415,13 +441,13 @@
       </section>
 
       <!-- ============ 3. TABLE ============ -->
-      <section id="panel-table" class="panel hidden space-y-8" role="tabpanel">
+      <section id="panel-table" class="panel hidden min-h-0 flex flex-col gap-4" role="tabpanel">
         <div class="flex items-start justify-between gap-4">
           <div>
             <h2 class="text-[22px] font-semibold tracking-tight">Attribute table</h2>
-            <p class="hint mt-1">Click a row to zoom to it. Double-click a cell to edit it.</p>
+            <p class="hint mt-1">Search or filter columns, double-click to edit cells, or add a field. Export to keep your edits.</p>
           </div>
-          <button id="widenBtn" class="btn btn-outline !h-9 !px-4 hidden md:inline-flex shrink-0" title="Make the panel wider">Expand</button>
+          <button id="widenBtn" class="btn btn-outline !h-9 !px-4 shrink-0" type="button" aria-pressed="false" title="Hide the map and focus on the table">Full table</button>
         </div>
 
         <div id="tableEmpty" class="rounded-3xl bg-milk/70 px-6 py-12 text-center">
@@ -430,16 +456,26 @@
           <button class="btn btn-primary mt-6" data-goto="data">Add data</button>
         </div>
 
-        <div id="tableBody" class="hidden space-y-8">
-          <div>
-            <div class="flex items-center justify-between mb-3 text-[13px]">
-              <span id="rowCount" class="text-mocha"></span>
-              <span id="editCount" class="text-matcha font-semibold"></span>
+        <div id="tableBody" class="hidden min-h-0 flex-1 flex flex-col gap-4">
+          <div class="table-toolbar">
+            <div class="table-toolbar-row">
+              <label class="sr-only" for="tableQuery">Search all attributes</label>
+              <input id="tableQuery" class="field" type="search" placeholder="Search all attributes">
+              <button id="clearFilters" class="btn btn-outline !h-10 !px-4" type="button">Clear filters</button>
             </div>
+            <div class="table-toolbar-row">
+              <label class="sr-only" for="newFieldName">New field name</label>
+              <input id="newFieldName" class="field" type="text" maxlength="64" placeholder="New field name">
+              <button id="addFieldBtn" class="btn btn-primary !h-10 !px-4" type="button">Add field</button>
+              <div class="table-counts"><span id="rowCount" class="text-mocha"></span><span id="editCount" class="text-matcha font-semibold"></span></div>
+            </div>
+          </div>
+
+          <div id="tableGridSection">
             <div id="grid" class="h-[340px]"></div>
           </div>
 
-          <div>
+          <div class="table-summary">
             <h3 class="label">Summarize a field</h3>
             <select id="fieldSelect" class="field mt-2" aria-label="Field"></select>
             <div class="grid grid-cols-3 gap-2 mt-4">
@@ -460,7 +496,7 @@
     </main>
 
     <footer class="hidden md:flex px-8 py-4 border-t border-line items-center justify-between text-[12px] text-mocha">
-      <span>Runs entirely in your browser</span>
+      <span>Your files stay in your browser · basemap tiles load from Esri</span>
       <span>GIS.Coffee</span>
     </footer>
   </aside>
@@ -516,13 +552,13 @@
 </div>
 
 <!-- Libraries -->
-<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tabulator-tables@6/dist/js/tabulator.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jszip@3/dist/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5/papaparse.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/proj4@2/dist/proj4.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@7.4.0/turf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tabulator-tables@6.6.1/dist/js/tabulator.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.2/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.7.0/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/proj4@2.22.0/dist/proj4.js"></script>
 <!-- shpjs and sql.js (GeoPackage) load on demand -->
 
 <script>
@@ -540,7 +576,7 @@ const fmt = (n, d = 0) => Number(n).toLocaleString(undefined, { maximumFractionD
 const trunc = (s, n) => (s = String(s)).length > n ? s.slice(0, n - 1) + '…' : s;
 const slug = s => (String(s || '').toLowerCase().replace(/\.[a-z0-9]+$/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'gis-coffee');
 const SQLJS_BASE = 'https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/';
-const SHP_URLS = ['https://unpkg.com/shpjs@latest/dist/shp.js', 'https://cdn.jsdelivr.net/npm/shpjs@4.0.4/dist/shp.min.js'];
+const SHP_URLS = ['https://cdn.jsdelivr.net/npm/shpjs@4.0.4/dist/shp.min.js'];
 
 class FormatError extends Error { constructor(format, detail) { super(detail || format); this.format = format; this.detail = detail || ''; } }
 
@@ -549,7 +585,7 @@ const FORMAT_NAMES = { shp: 'Shapefile', kml: 'KML', kmz: 'KMZ', geojson: 'GeoJS
 const state = {
   data: null, name: '', format: '',
   basemap: 'street', style: { color: '#007f9e', opacity: 0.85, width: 2, radius: 6 },
-  table: null, tableDirty: true, chart: null, chartDirty: true, edits: 0,
+  table: null, tableReady: false, tableDirty: true, chart: null, chartDirty: true, edits: 0,
   hlAnim: null, popup: null, tab: 'data', legend: true, serif: true
 };
 
@@ -572,7 +608,13 @@ function toast(msg, kind = 'info', ms = 3500) {
   const dot = { info: '#007f9e', ok: '#168a55', warn: '#b88700', err: '#df4d57' }[kind] || '#007f9e';
   const el = document.createElement('div');
   el.className = 'toast pointer-events-auto flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_4px_20px_rgba(42,27,20,.16)] text-[13px] text-espresso';
-  el.innerHTML = `<span class="w-2 h-2 rounded-full shrink-0" style="background:${dot}"></span><div class="leading-snug">${msg}</div>`;
+  const marker = document.createElement('span');
+  marker.className = 'w-2 h-2 rounded-full shrink-0';
+  marker.style.background = dot;
+  const message = document.createElement('div');
+  message.className = 'leading-snug';
+  message.textContent = String(msg ?? '');
+  el.append(marker, message);
   $('#toasts').appendChild(el);
   requestAnimationFrame(() => el.classList.add('show'));
   setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, ms);
@@ -583,7 +625,7 @@ function showFormatError(format, detail) {
   const kept = state.data ? ` Nothing new was added. The map is still showing your previous layer (${state.name}).` : '';
   $('#errorDetail').textContent = (detail || '') + kept;
   $('#errorDetail').classList.toggle('hidden', !(detail || kept));
-  toast(state.data ? `Import failed. Still showing ${esc(trunc(state.name, 30))}.` : 'Import failed. See the message in the panel.', 'err', 5000);
+  toast(state.data ? `Import failed. Still showing ${trunc(state.name, 30)}.` : 'Import failed. See the message in the panel.', 'err', 5000);
   $('#errorBox').classList.remove('hidden');
   showTab('data');
   requestAnimationFrame(() => $('#errorBox').scrollIntoView({ behavior: 'smooth', block: 'center' }));
@@ -1009,7 +1051,7 @@ function gpkgProjector(srs) {
   let def = null;
   if (org === 'EPSG' && proj4.defs('EPSG:' + code)) def = 'EPSG:' + code;
   else if (srs.definition && srs.definition !== 'undefined') { try { proj4(srs.definition); def = srs.definition; } catch (_) {} }
-  if (!def) { toast(`Unknown coordinate system (${esc(code)}); coordinates shown as-is.`, 'warn'); return null; }
+  if (!def) { toast(`Unknown coordinate system (${code}); coordinates shown as-is.`, 'warn'); return null; }
   return projectorFrom(def);
 }
 async function gpkgToGeoJSON(buf) {
@@ -1110,7 +1152,7 @@ function loadData(fc, name, format) {
   if (!$('#titleInput').dataset.touched) { $('#titleInput').value = prettyName(name); updateTitle(); }
   populateFieldSelect(); renderLayerCard(); updateLegend();
   if (state.tab === 'table') { buildTable(); renderChart(); }
-  toast(`Order up! <b>${fmt(fc.features.length)}</b> features loaded.`, 'ok');
+  toast(`Order up! ${fmt(fc.features.length)} features loaded.`, 'ok');
 }
 const prettyName = n => String(n).replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
@@ -1119,6 +1161,7 @@ function clearData() {
   if (map.getSource('lyr')) map.getSource('lyr').setData(EMPTY);
   if (state.popup) state.popup.remove();
   if (state.table) { state.table.destroy(); state.table = null; }
+  state.tableReady = false;
   if (state.chart) { state.chart.destroy(); state.chart = null; }
   $('#layerCard').classList.add('hidden');
   $('#legend').classList.add('hidden');
@@ -1160,7 +1203,7 @@ function renderLayerCard() {
           <div class="hint">${esc(FORMAT_NAMES[state.format] || state.format)} · ${fmt(state.data.features.length)} features · ${fmt(fields.length)} fields</div>
         </div>
       </div>
-      <p class="hint mt-4">${types}${size ? `<br>${size}` : ''}</p>
+      <p class="hint mt-4">${esc(types)}${size ? `<br>${size}` : ''}</p>
       <div class="grid grid-cols-2 gap-2 mt-5">
         <button class="btn btn-outline !h-10 !px-3" data-act="zoom">Zoom to layer</button>
         <button class="btn btn-outline !h-10 !px-3" data-act="table">Open table</button>
@@ -1265,6 +1308,7 @@ function getFields() {
 function buildTable() {
   if (!state.data) return;
   if (state.table) { state.table.destroy(); state.table = null; }
+  state.tableReady = false;
   const fields = getFields();
   const columns = [
     { title: '#', field: '__row', width: 56, frozen: true, hozAlign: 'right', formatter: c => c.getValue() + 1 },
@@ -1291,14 +1335,42 @@ function buildTable() {
     row.update({ [field]: v });
     if (map.getSource('lyr')) map.getSource('lyr').setData(state.data);
     state.edits++;
-    $('#editCount').textContent = `${state.edits} ${state.edits === 1 ? 'edit' : 'edits'} saved`;
+    $('#editCount').textContent = `${state.edits} ${state.edits === 1 ? 'edit' : 'edits'} this session`;
     const el = cell.getElement(); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
     if ($('#fieldSelect').value === field) renderChart();
   });
   state.table.on('dataFiltered', (filters, r) => updateRowCount(r.length));
+  state.table.on('tableBuilt', () => {
+    state.tableReady = true;
+    applyTableQuery();
+  });
   updateRowCount(rows.length);
   state.tableDirty = false;
   $('#editCount').textContent = '';
+}
+function applyTableQuery() {
+  if (!state.table || !state.tableReady) return;
+  const query = $('#tableQuery').value.trim().toLocaleLowerCase();
+  if (!query) return;
+  const fields = getFields();
+  state.table.setFilter(row => fields.some(field => String(row[field] ?? '').toLocaleLowerCase().includes(query)));
+}
+function addTableField() {
+  if (!state.data) return;
+  const input = $('#newFieldName');
+  const field = input.value.trim();
+  const normalized = field.toLocaleLowerCase();
+  if (!field) { toast('Give the new field a name.', 'warn'); input.focus(); return; }
+  if (['__row', '__proto__', 'prototype', 'constructor'].includes(normalized)) { toast('That field name is reserved.', 'warn'); input.focus(); return; }
+  if (getFields().some(name => name.toLocaleLowerCase() === normalized)) { toast('A field with that name already exists.', 'warn'); input.focus(); return; }
+  state.data.features.forEach(feature => { feature.properties[field] = null; });
+  state.tableDirty = true;
+  input.value = '';
+  buildTable();
+  populateFieldSelect();
+  renderChart();
+  input.focus();
+  toast(`Added "${field}". Export a file to keep the change.`, 'ok');
 }
 function updateRowCount(shown) {
   const total = state.data ? state.data.features.length : 0;
@@ -1436,7 +1508,7 @@ async function printMap() {
     if (!blob) throw new Error('The image could not be created.');
     downloadBlob(blob, slug($('#titleInput').value || 'gis-coffee-map') + '.png');
     toast(`Map saved (${out.width} × ${out.height} px).`, 'ok');
-  } catch (e) { console.error(e); toast('Could not save the map: ' + esc(e.message), 'err', 5000); }
+  } catch (e) { console.error(e); toast('Could not save the map: ' + e.message, 'err', 5000); }
   finally { if (canScale && target !== orig) map.setPixelRatio(orig); busy(false); }
 }
 
@@ -1470,18 +1542,28 @@ function loadSample() {
   try {
     loadData(normalize(makeSample(), 'Sample data'), 'Twin Cities coffee crawl.geojson', 'sample');
     if (!$('#subtitleInput').dataset.touched) { $('#subtitleInput').value = 'Sample data: fictional cafés, delivery zones and a route'; updateTitle(); }
-  } catch (e) { console.error(e); toast('Sample failed to load: ' + esc(e.message), 'err'); }
+  } catch (e) { console.error(e); toast('Sample failed to load: ' + e.message, 'err'); }
 }
 
 /* ---------------------------- UI wiring ---------------------------- */
 function showTab(name) {
   state.tab = name;
+  const tableMode = name === 'table';
+  const appShell = $('#appShell');
+  appShell.classList.toggle('table-workspace', tableMode);
+  if (!tableMode) {
+    appShell.classList.remove('table-fullscreen');
+    $('#widenBtn').textContent = 'Full table';
+    $('#widenBtn').title = 'Hide the map and focus on the table';
+    $('#widenBtn').setAttribute('aria-pressed', 'false');
+  }
   $$('.tab').forEach(b => { const on = b.dataset.tab === name; b.classList.toggle('active', on); b.setAttribute('aria-selected', on); });
   $$('.panel').forEach(p => p.classList.toggle('hidden', p.id !== 'panel-' + name));
   $('#panels').scrollTop = 0;
-  if (name === 'table' && state.data) requestAnimationFrame(() => {
+  if (tableMode && state.data) requestAnimationFrame(() => {
     if (state.tableDirty || !state.table) buildTable(); else state.table.redraw(true);
     if (state.chartDirty || !state.chart) renderChart();
+    setTimeout(() => { map.resize(); state.table && state.table.redraw(true); state.chart && state.chart.resize(); }, 340);
   });
 }
 function updateTitle() {
@@ -1547,11 +1629,20 @@ function wire() {
 
   $('#printBtn').addEventListener('click', printMap);
   $('#fieldSelect').addEventListener('change', renderChart);
-  $('#widenBtn').addEventListener('click', () => {
-    const sb = $('#sidebar'); sb.classList.toggle('wide');
-    $('#widenBtn').textContent = sb.classList.contains('wide') ? 'Collapse' : 'Expand';
-    setTimeout(() => { map.resize(); state.table && state.table.redraw(true); state.chart && state.chart.resize(); }, 330);
+  $('#widenBtn').addEventListener('click', e => {
+    const fullTable = $('#appShell').classList.toggle('table-fullscreen');
+    e.currentTarget.textContent = fullTable ? 'Show map' : 'Full table';
+    e.currentTarget.title = fullTable ? 'Return to the split map and table view' : 'Hide the map and focus on the table';
+    e.currentTarget.setAttribute('aria-pressed', String(fullTable));
+    setTimeout(() => { map.resize(); state.table && state.table.redraw(true); state.chart && state.chart.resize(); }, 340);
   });
+  $('#tableQuery').addEventListener('input', applyTableQuery);
+  $('#clearFilters').addEventListener('click', () => {
+    $('#tableQuery').value = '';
+    if (state.table && state.tableReady) state.table.clearFilter(true);
+  });
+  $('#addFieldBtn').addEventListener('click', addTableField);
+  $('#newFieldName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTableField(); } });
 }
 
 wire();
